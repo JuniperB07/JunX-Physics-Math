@@ -507,6 +507,21 @@ namespace JunX
 
             return new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, 1.0 / index)).SetDimension(Dimension / index);
         }
+
+        public double ToDimensionless()
+            => Dimension == 0 ? Original.Magnitude : throw new InvalidOperationException(ErrorMsg.INVALID_DIMENSION_CASTING);
+        public Str ToLinearUnit()
+            => Dimension == 1 ?
+            Str.Create(Original.Magnitude, Original.Scale) :
+            throw new InvalidOperationException(ErrorMsg.INVALID_DIMENSION_CASTING);
+        public UnitSquared<Str, En> ToUnitSquared()
+            => Dimension == 2 ?
+            new UnitSquared<Str, En>(Original.Magnitude, Original.Scale) :
+            throw new InvalidOperationException(ErrorMsg.INVALID_DIMENSION_CASTING);
+        public UnitCubed<Str, En> ToUnitCubed()
+            => Dimension == 3 ?
+            new UnitCubed<Str, En>(Original.Magnitude, Original.Scale) :
+            throw new InvalidOperationException(ErrorMsg.INVALID_DIMENSION_CASTING);
         #endregion
 
         #region OVERRIDES
