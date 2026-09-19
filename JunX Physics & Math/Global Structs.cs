@@ -633,6 +633,39 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a composite, binary product measurement consisting of two multiplied unit components 
+    /// (<typeparamref name="Str1"/> × <typeparamref name="Str2"/>), providing strongly typed cross-unit arithmetic, 
+    /// scale management, and dimensional reduction.
+    /// </summary>
+    /// <typeparam name="Str1">
+    /// The underlying structure type representing the primary unit factor in the product measurement.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En1">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str1"/>.
+    /// </typeparam>
+    /// <typeparam name="Str2">
+    /// The underlying structure type representing the secondary unit factor in the product measurement.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En2">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str2"/>.
+    /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="ProductUnit{Str1, En1, Str2, En2}"/> models compound physical quantities formed by multiplying 
+    /// two distinct linear or higher-dimensional unit factors (e.g., Force × Distance for Torque/Work, or Mass × Acceleration for Force). 
+    /// It tracks scale configurations independently for both component units while exposing unified cross-unit operators.
+    /// </para>
+    /// <para>
+    /// The struct supports algebraic dimensional transformations, including commutative transposition via 
+    /// <c>Commute()</c>, scalar multiplication/division, and factor cancellation via division by component units 
+    /// (<typeparamref name="Str1"/> or <typeparamref name="Str2"/>). Arithmetic operations between composite units 
+    /// enforce strict scale alignment across both unit dimensions, throwing an <see cref="InvalidOperationException"/> 
+    /// if scales mismatch.
+    /// </para>
+    /// </remarks>
     public struct ProductUnit<Str1, En1, Str2, En2> :
         IDimensionAccessible,
         IInitializable<ProductUnit<Str1, En1, Str2, En2>>,
@@ -845,6 +878,7 @@ namespace JunX
             return ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2>.Create(res)
                 .SetScales(l.Original.Scale1, r.Original.Scale);
         }
+        public static ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> operator *(Str2 l, ProductUnit<Str1, En1, Str2, En2> r) => r * l;
         public static ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> operator *(ProductUnit<Str1, En1, Str2, En2> l, Str1 r)
         {
             if (!l.Original.Scale1.Equals(r.Original.Scale))
@@ -854,6 +888,7 @@ namespace JunX
             return ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2>.Create(res)
                 .SetScales(r.Original.Scale, l.Original.Scale2);
         }
+        public static ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> operator *(Str1 l, ProductUnit<Str1, En1, Str2, En2> r) => r * l;
 
         public static double operator /(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
             => l.IsEqualScales(r) ? l.Original.Magnitude / r.Original.Magnitude :
