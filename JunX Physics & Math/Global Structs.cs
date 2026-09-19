@@ -42,7 +42,8 @@ namespace JunX
         IDuplicatable<UnitSquared<Str, En>>,
         IValueAccessible<En>,
         ISquareRootable<Str>,
-        IEquatable<UnitSquared<Str, En>>
+        IEquatable<UnitSquared<Str, En>>,
+        IExponentiable<HyperUnit<Str, En>>
 
         where En : Enum
         where Str: struct, IDimensionAccessible,
@@ -132,6 +133,11 @@ namespace JunX
             return this;
         }
         public double As(En scale) => Duplicate().Convert(scale).Converted.Magnitude;
+
+        public HyperUnit<Str, En> Squared() => this * this;
+        public HyperUnit<Str, En> Cubed() => this * this * this;
+        public HyperUnit<Str, En> Pow(int exp)
+            => new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
 
         public Str Sqrt()
             => Str.Create(Math.Sqrt(Normalized.Magnitude));
@@ -223,7 +229,8 @@ namespace JunX
         IDuplicatable<UnitCubed<Str, En>>,
         IValueAccessible<En>,
         ICubeRootable<Str>,
-        IEquatable<UnitCubed<Str, En>>
+        IEquatable<UnitCubed<Str, En>>,
+        IExponentiable<HyperUnit<Str, En>>
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -311,6 +318,11 @@ namespace JunX
             return this;
         }
         public double As(En scale) => Duplicate().Convert(scale).Converted.Magnitude;
+
+        public HyperUnit<Str, En> Squared() => this * this;
+        public HyperUnit<Str, En> Cubed() => this * this * this;
+        public HyperUnit<Str, En> Pow(int exp)
+            => new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
 
         public Str CubeRt()
             => Str.Create(Radical.Root(Normalized.Magnitude, Dimension), Normalized.Scale);
