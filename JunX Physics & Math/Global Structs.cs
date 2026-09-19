@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Transactions;
@@ -379,7 +380,11 @@ namespace JunX
         IScaleConvertible<HyperUnit<Str, En>, En>,
         IDuplicatable<HyperUnit<Str, En>>,
         IValueAccessible<En>,
-        IEquatable<HyperUnit<Str, En>>
+        IEquatable<HyperUnit<Str, En>>,
+        ISquareRootable<HyperUnit<Str, En>>,
+        ICubeRootable<HyperUnit<Str, En>>,
+        IRootable<HyperUnit<Str, En>>,
+        IExponentiable<HyperUnit<Str, En>>
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -476,6 +481,32 @@ namespace JunX
             return this;
         }
         public double As(En scale) => Duplicate().Convert(scale).Converted.Magnitude;
+
+        public HyperUnit<Str, En> Squared() => this * this;
+        public HyperUnit<Str, En> Cubed() => this * this * this;
+        public HyperUnit<Str, En> Pow(int exp)
+            => new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
+
+        public HyperUnit<Str, En> Sqrt()
+        {
+            if (Dimension % 2 != 0)
+                throw new ArgumentOutOfRangeException(ErrorMsg.NON_ROOTABLE_DIMENSION);
+            return new HyperUnit<Str, En>(Math.Sqrt(Normalized.Magnitude)).SetDimension(Dimension / 2);
+        }
+        public HyperUnit<Str, En> CubeRt()
+        {
+            if (Dimension % 3 != 0)
+                throw new ArgumentOutOfRangeException(ErrorMsg.NON_ROOTABLE_DIMENSION);
+
+            return new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, 1.0 / 3.0)).SetDimension(Dimension / 3);
+        }
+        public HyperUnit<Str, En> Root(int index)
+        {
+            if (Dimension % index != 0)
+                throw new ArgumentOutOfRangeException(ErrorMsg.NON_ROOTABLE_DIMENSION);
+
+            return new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, 1.0 / index)).SetDimension(Dimension / index);
+        }
         #endregion
 
         #region OVERRIDES
