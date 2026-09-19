@@ -134,6 +134,9 @@ namespace JunX
 
         public Str Sqrt()
             => Str.Create(Math.Sqrt(Normalized.Magnitude));
+
+        public HyperUnit<Str, En> ToHyperUnit()
+            => new HyperUnit<Str, En>(Original.Magnitude, Original.Scale).SetDimension(Dimension);
         #endregion
 
         #region OVERRIDES
@@ -310,6 +313,9 @@ namespace JunX
 
         public Str CubeRt()
             => Str.Create(Radical.Root(Normalized.Magnitude, Dimension), Normalized.Scale);
+
+        public HyperUnit<Str, En> ToHyperUnit()
+            => new HyperUnit<Str, En>(Original.Magnitude, Original.Scale).SetDimension(Dimension);
         #endregion
 
         #region OVERRIDES
@@ -521,7 +527,24 @@ namespace JunX
         public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, HyperUnit<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
 
+        public static HyperUnit<Str, En> operator /(HyperUnit<Str, En> l, HyperUnit<Str, En> r)
+        {
+            if (r.Dimension > l.Dimension)
+                throw new ArgumentOutOfRangeException(nameof(r.Dimension), r.Dimension, ErrorMsg.RESULTING_NEGATIVE_DIMENSION);
 
+            return new HyperUnit<Str, En>(l.Normalized.Magnitude / r.Normalized.Magnitude)
+                .SetDimension(l.Dimension - r.Dimension);
+        }
+        public static HyperUnit<Str, En> operator /(HyperUnit<Str, En> l, UnitCubed<Str, En> r)
+            => l.Dimension >= r.Dimension ? l / r.ToHyperUnit() :
+            throw new ArgumentOutOfRangeException(ErrorMsg.RESULTING_NEGATIVE_DIMENSION);
+        public static HyperUnit<Str, En> operator /(HyperUnit<Str, En> l, UnitSquared<Str, En> r)
+            => l.Dimension >= r.Dimension ? l / r.ToHyperUnit() :
+            throw new ArgumentOutOfRangeException(ErrorMsg.RESULTING_NEGATIVE_DIMENSION);
+        public static HyperUnit<Str, En> operator /(HyperUnit<Str, En> l, Str r)
+            => l.Dimension >= 1 ?
+            new HyperUnit<Str, En>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetDimension(l.Dimension - 1) :
+            throw new ArgumentOutOfRangeException(ErrorMsg.RESULTING_NEGATIVE_DIMENSION);
         #endregion
     }
 }

@@ -13,5 +13,6 @@ namespace JunX
     public static class ErrorMsg
     {
         public const string OPERAND_DIMENSION_MISMATCH = "Cannot operate on operands with different dimensions.";
+        public const string RESULTING_NEGATIVE_DIMENSION = "Resulting dimension is negative.";
     }
 }
