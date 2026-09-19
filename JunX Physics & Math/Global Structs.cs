@@ -710,10 +710,10 @@ namespace JunX
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
 
-        public Type Struct1 = typeof(Str1);
-        public Type Struct2 = typeof(Str2);
-        public Type Enum1 = typeof(En1);
-        public Type Enum2 = typeof(En2);
+        public static Type Struct1 = typeof(Str1);
+        public static Type Struct2 = typeof(Str2);
+        public static Type Enum1 = typeof(En1);
+        public static Type Enum2 = typeof(En2);
         #endregion
 
         #region CONSTRUCTORS
@@ -793,7 +793,7 @@ namespace JunX
                 (Enum1 == other.Enum1 && Enum2 == other.Enum2);
         }
         public bool IsEqualScales(ProductUnit<Str1, En1, Str2, En2> other)
-            => Original.Scale1Ordinal == other.Original.Scale1Ordinal && Original.Scale1Ordinal == other.Original.Scale2Ordinal;
+            => Original.Scale1Ordinal == other.Original.Scale1Ordinal && Original.Scale2Ordinal == other.Original.Scale2Ordinal;
 
         public bool IsEqualTo<Str3, En3, Str4, En4>(ProductUnit<Str3, En3, Str4, En4> other)
             where Str3 : struct, IDimensionAccessible,
