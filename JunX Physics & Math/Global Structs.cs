@@ -13,7 +13,7 @@ namespace JunX
 {
     /// <summary>
     /// Represents a generic two-dimensional (squared) unit measurement capable of scale conversion, 
-    /// normalization, cross-dimensional arithmetic, and dimensional reduction via square root operations.
+    /// normalization, cross-dimensional arithmetic, exponentiation, and dimensional reduction.
     /// </summary>
     /// <typeparam name="Str">
     /// The underlying one-dimensional base unit structure type. Must be a value type implementing 
@@ -29,9 +29,10 @@ namespace JunX
     /// explicit 2D dimensional context (<c>Dimension = 2</c>) and implements generic math contracts.
     /// </para>
     /// <para>
-    /// The structure handles automatic unit scaling and scale conversions by leveraging the transformation 
-    /// rules defined by the underlying linear unit <typeparamref name="Str"/>. Normalization and equality 
-    /// operations evaluate values against the base unit scale.
+    /// This structure supports scale conversions and normalization by leveraging the transformation 
+    /// rules defined by the underlying 1D unit <typeparamref name="Str"/>. High-dimensional products 
+    /// and exponentiation operations (such as squaring or raising to an arbitrary power) dynamically 
+    /// elevate the measurement into a higher-dimensional <c>HyperUnit&lt;Str, En&gt;</c>.
     /// </para>
     /// </remarks>
     public struct UnitSquared<Str, En> :
@@ -200,7 +201,7 @@ namespace JunX
 
     /// <summary>
     /// Represents a generic three-dimensional (cubed) unit measurement capable of scale conversion, 
-    /// normalization, cross-dimensional arithmetic, and dimensional reduction via cube root operations.
+    /// normalization, cross-dimensional arithmetic, exponentiation, and dimensional reduction.
     /// </summary>
     /// <typeparam name="Str">
     /// The underlying one-dimensional base unit structure type. Must be a value type implementing 
@@ -216,9 +217,10 @@ namespace JunX
     /// explicit 3D dimensional context (<c>Dimension = 3</c>) and implements generic math contracts.
     /// </para>
     /// <para>
-    /// The structure handles automatic unit scaling and scale conversions by leveraging the transformation 
-    /// rules defined by the underlying linear unit <typeparamref name="Str"/>. Normalization and equality 
-    /// operations evaluate values against the base unit scale.
+    /// This structure supports scale conversions and normalization by leveraging the transformation 
+    /// rules defined by the underlying 1D unit <typeparamref name="Str"/>. Multiplication operations 
+    /// and power functions dynamically promote the value into higher-dimensional <c>HyperUnit&lt;Str, En&gt;</c> 
+    /// instances, while division operations allow dimensional reduction back to lower-dimensional units.
     /// </para>
     /// </remarks>
     public struct UnitCubed<Str, En> :
@@ -385,6 +387,31 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a generalized, arbitrary-dimensional unit measurement capable of dynamic dimensional 
+    /// transformation, cross-dimensional arithmetic, scale conversion, root extraction, and exponentiation.
+    /// </summary>
+    /// <typeparam name="Str">
+    /// The underlying one-dimensional base unit structure type. Must be a value type implementing 
+    /// dimension access, normalization, scale conversion, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En">
+    /// The unit scale enumeration type representing the valid scales or prefixes for the unit.
+    /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// Unlike specialized fixed-dimension types (such as linear units, <c>UnitSquared&lt;Str, En&gt;</c>, 
+    /// or <c>UnitCubed&lt;Str, En&gt;</c>), <see cref="HyperUnit{Str, En}"/> tracks its <see cref="Dimension"/> 
+    /// dynamically at runtime. This allows it to represent hyperspatial physical quantities (e.g., 4D+ hyper-volumes) 
+    /// or results of complex cross-dimensional multiplication and division operations.
+    /// </para>
+    /// <para>
+    /// <see cref="HyperUnit{Str, En}"/> handles automatic unit scaling and scale conversions by leveraging 
+    /// the transformation rules defined by the underlying 1D unit <typeparamref name="Str"/>. Arithmetic 
+    /// and root-taking operations enforce dimensional validity checks, throwing exceptions when attempting 
+    /// operations that yield negative dimensions, invalid roots, or mismatched additive operands.
+    /// </para>
+    /// </remarks>
     public struct HyperUnit<Str, En> :
         IDimensionAccessible,
         IInitializable<HyperUnit<Str, En>>, IInitializable<HyperUnit<Str, En>, double>, IInitializable<HyperUnit<Str, En>, double, En>,
@@ -603,6 +630,93 @@ namespace JunX
             => l.Dimension >= 1 ?
             new HyperUnit<Str, En>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetDimension(l.Dimension - 1) :
             throw new ArgumentOutOfRangeException(ErrorMsg.RESULTING_NEGATIVE_DIMENSION);
+        #endregion
+    }
+
+    public struct ProductUnit<Str1, En1, Str2, En2> :
+        IDimensionAccessible,
+        IInitializable<ProductUnit<Str1, En1, Str2, En2>>,
+        IInitializable<ProductUnit<Str1, En1, Str2, En2>, double>
+
+        where Str1: struct, IDimensionAccessible,
+            IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
+            INormalized<En1>, INormalizable<Str1>,
+            IScaleConvertible<Str1, En1>, IValueAccessible<En1>
+        where Str2: struct, IDimensionAccessible,
+            IInitializable<Str2>, IInitializable<Str2, double>, IInitializable<Str2, double, En2>,
+            INormalized<En2>, INormalizable<Str2>,
+            IScaleConvertible<Str2, En2>, IValueAccessible<En2>
+        where En1: Enum
+        where En2: Enum
+    {
+        #region PROPERTIES
+        private static int BaseScale1Ordinal
+        {
+            get
+            {
+                En1 bs1 = BaseScale1;
+                return Unsafe.As<En1, int>(ref bs1);
+            }
+        }
+        private static int BaseScale2Ordinal
+        {
+            get
+            {
+                En2 bs2 = BaseScale2;
+                return Unsafe.As<En2, int>(ref bs2);
+            }
+        }
+
+        public int Dimension => 1;
+
+        public static En1 BaseScale1 => Str1.BaseScale;
+        public static En2 BaseScale2 => Str2.BaseScale;
+
+        public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
+        #endregion
+
+        #region CONSTRUCTORS
+        public ProductUnit()
+        {
+            Original = (0, BaseScale1, BaseScale2, BaseScale1Ordinal, BaseScale2Ordinal);
+        }
+        public ProductUnit(ProductUnit<Str1, En1, Str2, En2> instance)
+        {
+            this = instance;
+        }
+        public ProductUnit(double magnitude)
+        {
+            Original = (magnitude, BaseScale1, BaseScale2, BaseScale1Ordinal, BaseScale2Ordinal);
+        }
+        #endregion
+
+        #region METHODS
+        public static ProductUnit<Str1, En1, Str2, En2> Initialize() => new();
+        public static ProductUnit<Str1, En1, Str2, En2> Create(ProductUnit<Str1, En1, Str2, En2> instance)
+            => new(instance);
+        public static ProductUnit<Str1, En1, Str2, En2> Create(double magnitude) => new(magnitude);
+
+        public ProductUnit<Str1, En1, Str2, En2> SetScale1(En1 scale1)
+        {
+            (double mag, En2 s2, int s2Ord) orig = (Original.Magnitude, Original.Scale2, Original.Scale2Ordinal);
+
+            Original = (orig.mag, scale1, orig.s2, Unsafe.As<En1, int>(ref scale1), orig.s2Ord);
+            return this;
+        }
+        public ProductUnit<Str1, En1, Str2, En2> SetScale2(En2 scale2)
+        {
+            (double mag, En1 s1, int s1Ord) orig = (Original.Magnitude, Original.Scale1, Original.Scale1Ordinal);
+
+            Original = (orig.mag, orig.s1, scale2, orig.s1Ord, Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
+        public ProductUnit<Str1, En1, Str2, En2> SetScales(En1 scale1, En2 scale2)
+        {
+            double mag = Original.Magnitude;
+
+            Original = (mag, scale1, scale2, Unsafe.As<En1, int>(ref scale1), Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
         #endregion
     }
 }
