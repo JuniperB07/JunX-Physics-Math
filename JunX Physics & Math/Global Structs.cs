@@ -827,7 +827,53 @@ namespace JunX
         #endregion
 
         #region CROSS-UNIT ARITHMETIC OPERATORS
+        public static ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> operator *(ProductUnit<Str1, En1, Str2, En2>l, ProductUnit<Str1, En1, Str2, En2> r)
+        {
+            if (!l.IsEqualScales(r))
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
 
+            double res = l.Original.Magnitude * r.Original.Magnitude;
+            return ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2>.Create(res)
+                .SetScales(l.Original.Scale1, l.Original.Scale2);
+        }
+        public static ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> operator *(ProductUnit<Str1, En1, Str2, En2> l, Str2 r)
+        {
+            if (!l.Original.Scale2.Equals(r.Original.Scale))
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double res = l.Original.Magnitude * r.Original.Magnitude;
+            return ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2>.Create(res)
+                .SetScales(l.Original.Scale1, r.Original.Scale);
+        }
+        public static ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> operator *(ProductUnit<Str1, En1, Str2, En2> l, Str1 r)
+        {
+            if (!l.Original.Scale1.Equals(r.Original.Scale))
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double res = l.Original.Magnitude * r.Original.Magnitude;
+            return ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2>.Create(res)
+                .SetScales(r.Original.Scale, l.Original.Scale2);
+        }
+
+        public static double operator /(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ? l.Original.Magnitude / r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static Str1 operator /(ProductUnit<Str1, En1, Str2, En2> l, Str2 r)
+        {
+            if (!l.Original.Scale2.Equals(r.Original.Scale))
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double res = l.Original.Magnitude / r.Original.Magnitude;
+            return Str1.Create(res, l.Original.Scale1);
+        }
+        public static Str2 operator /(ProductUnit<Str1, En1, Str2, En2> l, Str1 r)
+        {
+            if (!l.Original.Scale1.Equals(r.Original.Scale))
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double res = l.Original.Magnitude / r.Original.Magnitude;
+            return Str2.Create(res, l.Original.Scale2);
+        }
         #endregion
     }
 }
