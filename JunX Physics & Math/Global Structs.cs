@@ -710,10 +710,10 @@ namespace JunX
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
 
-        public static Type Struct1 = typeof(Str1);
-        public static Type Struct2 = typeof(Str2);
-        public static Type Enum1 = typeof(En1);
-        public static Type Enum2 = typeof(En2);
+        public Type Struct1 = typeof(Str1);
+        public Type Struct2 = typeof(Str2);
+        public  Type Enum1 = typeof(En1);
+        public Type Enum2 = typeof(En2);
         #endregion
 
         #region CONSTRUCTORS
