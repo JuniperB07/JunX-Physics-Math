@@ -636,7 +636,10 @@ namespace JunX
     public struct ProductUnit<Str1, En1, Str2, En2> :
         IDimensionAccessible,
         IInitializable<ProductUnit<Str1, En1, Str2, En2>>,
-        IInitializable<ProductUnit<Str1, En1, Str2, En2>, double>
+        IInitializable<ProductUnit<Str1, En1, Str2, En2>, double>,
+        IInitializable<ProductUnit<Str1, En1, Str2, En2>, double, En1>,
+        IDuplicatable<ProductUnit<Str1, En1, Str2, En2>>,
+        IEquatable<ProductUnit<Str1, En1, Str2, En2>>
 
         where Str1: struct, IDimensionAccessible,
             IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
@@ -688,6 +691,10 @@ namespace JunX
         {
             Original = (magnitude, BaseScale1, BaseScale2, BaseScale1Ordinal, BaseScale2Ordinal);
         }
+        public ProductUnit(double magnitude, En1 scale1)
+        {
+            Original = (magnitude, scale1, BaseScale2, Unsafe.As<En1, int>(ref scale1), BaseScale2Ordinal);
+        }
         #endregion
 
         #region METHODS
@@ -695,6 +702,7 @@ namespace JunX
         public static ProductUnit<Str1, En1, Str2, En2> Create(ProductUnit<Str1, En1, Str2, En2> instance)
             => new(instance);
         public static ProductUnit<Str1, En1, Str2, En2> Create(double magnitude) => new(magnitude);
+        public static ProductUnit<Str1, En1, Str2, En2> Create(double magnitude, En1 scale1) => new(magnitude, scale1);
 
         public ProductUnit<Str1, En1, Str2, En2> SetScale1(En1 scale1)
         {
@@ -716,6 +724,27 @@ namespace JunX
 
             Original = (mag, scale1, scale2, Unsafe.As<En1, int>(ref scale1), Unsafe.As<En2, int>(ref scale2));
             return this;
+        }
+
+        public ProductUnit<Str1, En1, Str2, En2> Duplicate() => new(this);
+        public bool Equals(ProductUnit<Str1, En1, Str2, En2> pu)
+        {
+            if (Original.Scale1Ordinal != pu.Original.Scale1Ordinal || Original.Scale2Ordinal != pu.Original.Scale2Ordinal)
+                return false;
+
+            return Original.Magnitude == pu.Original.Magnitude;
+        }
+        #endregion
+
+        #region OVERRIDES
+        [Obsolete]
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
         #endregion
     }
