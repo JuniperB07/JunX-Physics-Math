@@ -516,7 +516,12 @@ namespace JunX
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + 1);
         public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, UnitSquared<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
-        public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, )
+        public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, UnitCubed<Str, En> r)
+            => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
+        public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, HyperUnit<Str, En> r)
+            => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
+
+
         #endregion
     }
 }
