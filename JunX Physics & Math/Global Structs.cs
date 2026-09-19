@@ -676,6 +676,11 @@ namespace JunX
         public static En2 BaseScale2 => Str2.BaseScale;
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
+
+        public Type Struct1 = typeof(Str1);
+        public Type Struct2 = typeof(Str2);
+        public Type Enum1 = typeof(En1);
+        public Type Enum2 = typeof(En2);
         #endregion
 
         #region CONSTRUCTORS
@@ -734,6 +739,46 @@ namespace JunX
 
             return Original.Magnitude == pu.Original.Magnitude;
         }
+
+        public ProductUnit<Str2, En2, Str1, En1> Commute()
+            => new ProductUnit<Str2, En2, Str1, En1>(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+        
+        public bool IsEqualTypeParams<Str3, En3, Str4, En4>(ProductUnit<Str3, En3, Str4, En4> other)
+            where Str3 : struct, IDimensionAccessible,
+                IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+                INormalized<En3>, INormalizable<Str3>,
+                IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+            where Str4 : struct, IDimensionAccessible,
+                IInitializable<Str4>, IInitializable<Str4, double>, IInitializable<Str4, double, En4>,
+                INormalized<En4>, INormalizable<Str4>,
+                IScaleConvertible<Str4, En4>, IValueAccessible<En4>
+            where En3 : Enum
+            where En4 : Enum
+        {
+            return
+                (Struct1 == other.Struct1 && Struct2 == other.Struct2) &&
+                (Enum1 == other.Enum1 && Enum2 == other.Enum2);
+        }
+        public bool IsEqualScales(ProductUnit<Str1, En1, Str2, En2> other)
+            => Original.Scale1Ordinal == other.Original.Scale1Ordinal && Original.Scale1Ordinal == other.Original.Scale2Ordinal;
+
+        public bool IsEqualTo<Str3, En3, Str4, En4>(ProductUnit<Str3, En3, Str4, En4> other)
+            where Str3 : struct, IDimensionAccessible,
+                IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+                INormalized<En3>, INormalizable<Str3>,
+                IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+            where Str4 : struct, IDimensionAccessible,
+                IInitializable<Str4>, IInitializable<Str4, double>, IInitializable<Str4, double, En4>,
+                INormalized<En4>, INormalizable<Str4>,
+                IScaleConvertible<Str4, En4>, IValueAccessible<En4>
+            where En3 : Enum
+            where En4 : Enum
+        {
+            if (!IsEqualTypeParams(other))
+                return false;
+
+            return Original.Magnitude == other.Original.Magnitude;
+        }
         #endregion
 
         #region OVERRIDES
@@ -746,6 +791,43 @@ namespace JunX
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.Equals(r);
+        public static bool operator !=(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => !l.Equals(r);
+        public static bool operator <(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            l.Original.Magnitude < r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static bool operator >(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            l.Original.Magnitude > r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static bool operator <=(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r) => l < r || l == r;
+        public static bool operator >=(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static ProductUnit<Str1, En1, Str2, En2> operator +(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            new ProductUnit<Str1, En1, Str2, En2>(l.Original.Magnitude + r.Original.Magnitude).SetScales(l.Original.Scale1, l.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static ProductUnit<Str1, En1, Str2, En2> operator -(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            new ProductUnit<Str1, En1, Str2, En2>(l.Original.Magnitude - r.Original.Magnitude).SetScales(l.Original.Scale1, l.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static ProductUnit<Str1, En1, Str2, En2> operator *(ProductUnit<Str1, En1, Str2, En2> l, double r)
+            => new ProductUnit<Str1, En1, Str2, En2>(l.Original.Magnitude * r).SetScales(l.Original.Scale1, l.Original.Scale2);
+        public static ProductUnit<Str1, En1, Str2, En2> operator *(double l, ProductUnit<Str1, En1, Str2, En2> r) => r * l;
+        public static ProductUnit<Str1, En1, Str2, En2> operator /(ProductUnit<Str1, En1, Str2, En2> l, double r)
+            => new ProductUnit<Str1, En1, Str2, En2>(l.Original.Magnitude / r).SetScales(l.Original.Scale1, l.Original.Scale2);
+        #endregion
+
+        #region CROSS-UNIT ARITHMETIC OPERATORS
+
         #endregion
     }
 }

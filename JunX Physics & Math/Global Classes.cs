@@ -17,6 +17,9 @@ namespace JunX
         public const string RESULTING_NEGATIVE_DIMENSION = "Resulting dimension is negative.";
         public const string NON_ROOTABLE_DIMENSION = "Current dimension of the instance is not rootable in this case.";
         public const string INVALID_DIMENSION_CASTING = "Unable to cast current instance into the desired dimension.";
+        public const string TYPE_PARAMETER_MISMATCH = "Unable to compare instances with different type parameters.";
+        public const string COMPOSITE_UNIT_SCALE_MISMATCH = "Cannot operate on composite unit instances with different scale values.";
+
     }
 
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
