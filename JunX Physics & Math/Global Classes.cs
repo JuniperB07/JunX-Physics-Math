@@ -34,4 +34,6 @@ namespace JunX
             SecondEnumIndex = secondEnumIndex;
         }
     }
+
+    
 }

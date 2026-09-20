@@ -267,4 +267,13 @@ namespace JunX
         bool IsValid();
     }
     #endregion
+
+    #region SCALE VALUE ACCESSIBILITY
+    public interface IScaleValueAccessible<En1, En2>
+        where En1: Enum
+        where En2: Enum
+    {
+        public (En1 Scale1, En2 Scale2) ScaleValues { get; }
+    }
+    #endregion
 }

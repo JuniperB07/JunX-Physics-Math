@@ -672,7 +672,8 @@ namespace JunX
         IInitializable<ProductUnit<Str1, En1, Str2, En2>, double>,
         IInitializable<ProductUnit<Str1, En1, Str2, En2>, double, En1>,
         IDuplicatable<ProductUnit<Str1, En1, Str2, En2>>,
-        IEquatable<ProductUnit<Str1, En1, Str2, En2>>
+        IEquatable<ProductUnit<Str1, En1, Str2, En2>>,
+        IScaleValueAccessible<En1, En2>
 
         where Str1: struct, IDimensionAccessible,
             IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
@@ -709,6 +710,7 @@ namespace JunX
         public static En2 BaseScale2 => Str2.BaseScale;
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
+        public (En1 Scale1, En2 Scale2) ScaleValues => (Original.Scale1, Original.Scale2);
 
         public Type Struct1 = typeof(Str1);
         public Type Struct2 = typeof(Str2);
@@ -912,6 +914,127 @@ namespace JunX
         #endregion
     }
 
+    public struct TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> :
+        IDimensionAccessible,
+        IInitializable<TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3>, double>
+
+        where En1: Enum
+        where En2: Enum
+        where En3: Enum
+        where Str1 : struct, IDimensionAccessible,
+            IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
+            INormalized<En1>, INormalizable<Str1>,
+            IScaleConvertible<Str1, En1>, IValueAccessible<En1>
+        where Str2 : struct, IDimensionAccessible,
+            IInitializable<Str2>, IInitializable<Str2, double>, IInitializable<Str2, double, En2>,
+            INormalized<En2>, INormalizable<Str2>,
+            IScaleConvertible<Str2, En2>, IValueAccessible<En2>
+        where Str3 : struct, IDimensionAccessible,
+            IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+            INormalized<En3>, INormalizable<Str3>,
+            IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+    {
+        #region PROPERTIES
+        private static int BaseScale1Ordinal
+        {
+            get
+            {
+                En1 bs1 = BaseScale1;
+                return Unsafe.As<En1, int>(ref bs1);
+            }
+        }
+        private static int BaseScale2Ordinal
+        {
+            get
+            {
+                En2 bs2 = BaseScale2;
+                return Unsafe.As<En2, int>(ref bs2);
+            }
+        }
+        private static int BaseScale3Ordinal
+        {
+            get
+            {
+                En3 bs3 = BaseScale3;
+                return Unsafe.As<En3, int>(ref bs3);
+            }
+        }
+
+
+        public int Dimension => 1;
+
+        public (double Magnitude, ProductUnit<Str1, En1, Str2, En2> ProductUnit, En3 Scale3, int Scale3Ordinal) Components { get; private set; }
+
+        public static En1 BaseScale1 => Str1.BaseScale;
+        public static En2 BaseScale2 => Str2.BaseScale;
+        public static En3 BaseScale3 => Str3.BaseScale;
+        #endregion
+
+        #region CONSTRUCTORS
+        public TernaryProductUnit(double magnitude)
+        {
+            Components = (0, new ProductUnit<Str1, En1, Str2, En2>(0), BaseScale3, BaseScale3Ordinal);
+        }
+        #endregion
+
+        #region METHODS
+        public static TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> Create(double magnitude) => new(magnitude);
+
+        public TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> SetProductUnit(ProductUnit<Str1, En1, Str2, En2> puInstance)
+        {
+            (double mag, En3 s3, int s3Ord) orig = (Components.Magnitude, Components.Scale3, Components.Scale3Ordinal);
+
+            Components = (orig.mag, puInstance, orig.s3, orig.s3Ord);
+            return this;
+        }
+        public TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> SetScale3(En3 scale3)
+        {
+            (double mag, ProductUnit<Str1, En1, Str2, En2> pu) orig = (Components.Magnitude, Components.ProductUnit);
+
+            Components = (orig.mag, orig.pu, scale3, Unsafe.As<En3, int>(ref scale3));
+            return this;
+        }
+
+        public static TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> Multiply(ProductUnit<Str1, En1, Str2, En2> left, Str3 right)
+        {
+            double mag = left.Original.Magnitude * right.Original.Magnitude;
+
+            var unit = TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetProductUnit(left).SetScale3(right.Original.Scale);
+        }
+        public static TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> Multiply(Str3 left, ProductUnit<Str1, En1, Str2, En2> right)
+            => Multiply(right, left);
+
+        public static Str3 Divide(TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> left, ProductUnit<Str1, En1, Str2, En2> right)
+        {
+            double mag = left.Components.Magnitude / right.Original.Magnitude;
+
+            return Str3.Create(mag, left.Components.Scale3);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Divide(TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> left, Str3 right)
+        {
+            double mag = left.Components.Magnitude / right.Original.Magnitude;
+
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(left.Components.ProductUnit.Original.Scale1, left.Components.ProductUnit.Original.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str3, En3> Divide(TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> left, Str2 right)
+        {
+            double mag = left.Components.Magnitude / right.Original.Magnitude;
+
+            var unit = ProductUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(left.Components.ProductUnit.Original.Scale1, left.Components.Scale3);
+        }
+        public static ProductUnit<Str2, En2, Str3, En3> Divide(TernaryProductUnit<Str1, En1, Str2, En2, Str3, En3> left, Str1 right)
+        {
+            double mag = left.Components.Magnitude / right.Original.Magnitude;
+
+            var unit = ProductUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(left.Components.ProductUnit.Original.Scale2, left.Components.Scale3);
+        }
+        #endregion
+    }
+
     /// <summary>
     /// Represents a composite, binary quotient measurement consisting of a numerator unit component divided by a 
     /// denominator unit component (<typeparamref name="Str1"/> / <typeparamref name="Str2"/>), providing strongly typed 
@@ -951,7 +1074,8 @@ namespace JunX
         IInitializable<QuotientUnit<Str1, En1, Str2, En2>, double>,
         IInitializable<QuotientUnit<Str1, En1, Str2, En2>, double, En1>,
         IDuplicatable<QuotientUnit<Str1, En1, Str2, En2>>,
-        IEquatable<QuotientUnit<Str1, En1, Str2, En2>>
+        IEquatable<QuotientUnit<Str1, En1, Str2, En2>>,
+        IScaleValueAccessible<En1, En2>
 
         where Str1 : struct, IDimensionAccessible,
             IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
@@ -988,6 +1112,7 @@ namespace JunX
         public static En2 BaseScale2 => Str2.BaseScale;
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
+        public (En1 Scale1, En2 Scale2) ScaleValues => (Original.Scale1, Original.Scale2);
 
         public Type Struct1 = typeof(Str1);
         public Type Struct2 = typeof(Str2);
