@@ -35,4 +35,20 @@ namespace JunX
             SecondEnumIndex = secondEnumIndex;
         }
     }
+
+    #region COMPOSITE OPERATOR CLASSES
+    public abstract class CompositeOperator
+    {
+        public abstract CompositeOperators Operator { get; }
+    }
+
+    public class Multiplication : CompositeOperator
+    {
+        public override CompositeOperators Operator => CompositeOperators.Multiplication;
+    }
+    public class Division : CompositeOperator
+    {
+        public override CompositeOperators Operator => CompositeOperators.Division;
+    }
+    #endregion
 }
