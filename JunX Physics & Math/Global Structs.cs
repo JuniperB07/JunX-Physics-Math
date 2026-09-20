@@ -1068,5 +1068,24 @@ namespace JunX
             return base.GetHashCode();
         }
         #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.Equals(r);
+        public static bool operator !=(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => !l.Equals(r);
+        public static bool operator <(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            l.Original.Magnitude < r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static bool operator >(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            l.Original.Magnitude > r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static bool operator <=(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l < r || l == r;
+        public static bool operator >=(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l > r || l == r;
+        #endregion
     }
 }
