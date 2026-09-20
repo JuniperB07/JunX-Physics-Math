@@ -62,9 +62,31 @@ namespace JunX
             }
         }
 
+        /// <summary>
+        /// Gets the spatial dimensionality of the measurement, which is fixed at 2 for a squared unit.
+        /// </summary>
         public int Dimension => 2;
 
+        /// <summary>
+        /// Gets the base (unscaled default) unit scale enumeration value defined by the underlying 1D unit <typeparamref name="Str"/>.
+        /// </summary>
         public static En BaseScale => Str.BaseScale;
+        /// <summary>
+        /// Gets the normalized state of the 2D measurement expressed in terms of the fundamental base unit scale.
+        /// </summary>
+        /// <value>
+        /// A tuple containing:
+        /// <list type="bullet">
+        /// <item><description><c>Magnitude</c>: The 2D area value scaled to the base unit scale.</description></item>
+        /// <item><description><c>Scale</c>: The base unit scale enumeration value.</description></item>
+        /// <item><description><c>ScaleOrdinal</c>: The underlying integer ordinal of the base unit scale.</description></item>
+        /// </list>
+        /// </value>
+        /// <remarks>
+        /// If the current unit scale matches <see cref="BaseScale"/>, the property directly returns <see cref="Original"/>. 
+        /// Otherwise, it performs 2D normalization by extracting the square root of the magnitude, converting the 
+        /// 1D linear magnitude to the base scale, and squaring the normalized result back into a 2D magnitude.
+        /// </remarks>
         public (double Magnitude, En Scale, int ScaleOrdinal) Normalized
         {
             get
@@ -80,26 +102,54 @@ namespace JunX
                     baseUnit.Normalized.ScaleOrdinal);
             }
         }
-        
+
+        /// <summary>
+        /// Gets the original, unconverted measurement state as created or directly assigned.
+        /// </summary>
+        /// <value>
+        /// A tuple holding the magnitude, unit scale, and scale ordinal index of the measurement prior to scale conversions.
+        /// </value>
         public (double Magnitude, En Scale, int ScaleOrdinal) Original { get; private set; }
+        /// <summary>
+        /// Gets the measurement state resulting from the most recent explicit unit scale conversion.
+        /// </summary>
+        /// <value>
+        /// A tuple holding the magnitude, unit scale, and scale ordinal index following a conversion operation.
+        /// </value>
         public (double Magnitude, En Scale, int ScaleOrdinal) Converted { get; private set; }
         #endregion
 
         #region CONSTRUCTORS
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnitSquared{Str, En}"/> struct with a zero magnitude and default base scale.
+        /// </summary>
         public UnitSquared()
         {
             Original = (0, BaseScale, BaseScaleOrdinal);
             Converted = Original;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnitSquared{Str, En}"/> struct by copying the state of an existing instance.
+        /// </summary>
+        /// <param name="instance">The existing 2D unit measurement instance to duplicate.</param>
         public UnitSquared(UnitSquared<Str, En> instance)
         {
             this = instance;
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnitSquared{Str, En}"/> struct with a specified magnitude using the default base scale.
+        /// </summary>
+        /// <param name="magnitude">The scalar value representing the 2D spatial quantity.</param>
         public UnitSquared(double magnitude)
         {
             Original = (magnitude, BaseScale, BaseScaleOrdinal);
             Converted = (0, BaseScale, BaseScaleOrdinal);
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnitSquared{Str, En}"/> struct with a specified magnitude and unit scale.
+        /// </summary>
+        /// <param name="magnitude">The scalar value representing the 2D spatial quantity.</param>
+        /// <param name="scale">The unit scale or prefix enumeration value for the measurement.</param>
         public UnitSquared(double magnitude, En scale)
         {
             Original = (magnitude, scale, Unsafe.As<En, int>(ref scale));
@@ -108,18 +158,77 @@ namespace JunX
         #endregion
 
         #region METHODS
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UnitSquared{Str, En}"/> struct with default values.
+        /// </summary>
+        /// <returns>A new <see cref="UnitSquared{Str, En}"/> instance set to a magnitude of zero and the default base scale.</returns>
         public static UnitSquared<Str, En> Initialize() => new();
+        /// <summary>
+        /// Creates a new instance of the <see cref="UnitSquared{Str, En}"/> struct by copying an existing instance.
+        /// </summary>
+        /// <param name="instance">The 2D unit measurement instance to duplicate.</param>
+        /// <returns>A new <see cref="UnitSquared{Str, En}"/> instance with identical state to <paramref name="instance"/>.</returns>
         public static UnitSquared<Str, En> Create(UnitSquared<Str, En> instance) => new(instance);
+        /// <summary>
+        /// Creates a new instance of the <see cref="UnitSquared{Str, En}"/> struct with the specified magnitude and default base scale.
+        /// </summary>
+        /// <param name="magnitude">The scalar magnitude of the 2D measurement.</param>
+        /// <returns>A new <see cref="UnitSquared{Str, En}"/> instance configured with <paramref name="magnitude"/> and <see cref="BaseScale"/>.</returns>
         public static UnitSquared<Str, En> Create(double magnitude) => new(magnitude);
+        /// <summary>
+        /// Creates a new instance of the <see cref="UnitSquared{Str, En}"/> struct with the specified magnitude and unit scale.
+        /// </summary>
+        /// <param name="magnitude">The scalar magnitude of the 2D measurement.</param>
+        /// <param name="scale">The unit scale or prefix enumeration value.</param>
+        /// <returns>A new <see cref="UnitSquared{Str, En}"/> instance configured with <paramref name="magnitude"/> and <paramref name="scale"/>.</returns>
         public static UnitSquared<Str, En> Create(double magnitude, En scale) => new(magnitude, scale);
 
+        /// <summary>
+        /// Returns a new <see cref="UnitSquared{Str, En}"/> instance normalized to the fundamental base unit scale.
+        /// </summary>
+        /// <returns>
+        /// A new <see cref="UnitSquared{Str, En}"/> instance whose magnitude reflects the 2D area value scaled to <see cref="BaseScale"/>.
+        /// </returns>
+        /// <remarks>
+        /// This method uses the <see cref="Normalized"/> property to convert the 1D linear components of the measurement 
+        /// to the base scale before converting the overall 2D magnitude.
+        /// </remarks>
         public UnitSquared<Str, En> Normalize()
             => new UnitSquared<Str, En>(Normalized.Magnitude, Normalized.Scale);
 
+        /// <summary>
+        /// Creates a new copy of the current <see cref="UnitSquared{Str, En}"/> instance.
+        /// </summary>
+        /// <returns>A new <see cref="UnitSquared{Str, En}"/> instance with identical state to this instance.</returns>
         public UnitSquared<Str, En> Duplicate() => new(this);
+        /// <summary>
+        /// Indicates whether the current 2D unit measurement is equal to another <see cref="UnitSquared{Str, En}"/> measurement 
+        /// by comparing their normalized magnitudes.
+        /// </summary>
+        /// <param name="us">An instance of <see cref="UnitSquared{Str, En}"/> to compare with this measurement.</param>
+        /// <returns>
+        /// <see langword="true"/> if both measurements represent equal 2D magnitudes when normalized to their fundamental base scale; 
+        /// otherwise, <see langword="false"/>.
+        /// </returns>
         public bool Equals(UnitSquared<Str, En> us)
             => Normalized.Magnitude == us.Normalized.Magnitude;
 
+        /// <summary>
+        /// Converts the current 2D measurement to the specified target unit scale, updating the internal <see cref="Converted"/> state.
+        /// </summary>
+        /// <param name="toScale">The target unit scale enumeration value to convert this 2D measurement into.</param>
+        /// <returns>
+        /// A reference to the current <see cref="UnitSquared{Str, En}"/> instance with its <see cref="Converted"/> property set to the converted state.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// If <paramref name="toScale"/> matches <see cref="Original"/>.<c>Scale</c>, <see cref="Converted"/> is directly synchronized with <see cref="Original"/>.
+        /// </para>
+        /// <para>
+        /// For cross-scale conversions, 2D scale transformation is performed by taking the square root of the 2D magnitude, converting the underlying 
+        /// 1D unit <typeparamref name="Str"/> to <paramref name="toScale"/>, and then squaring the resulting converted magnitude.
+        /// </para>
+        /// </remarks>
         public UnitSquared<Str, En> Convert(En toScale)
         {
             if(toScale.Equals(Original.Scale))
@@ -133,16 +242,56 @@ namespace JunX
             Converted = (Math.Pow(baseUnit.Converted.Magnitude, Dimension), toScale, Unsafe.As<En, int>(ref toScale));
             return this;
         }
+        /// <summary>
+        /// Returns the magnitude of this 2D measurement converted to the specified unit scale without modifying the original instance.
+        /// </summary>
+        /// <param name="scale">The unit scale in which to express the 2D magnitude.</param>
+        /// <returns>The calculated 2D scalar magnitude in terms of <paramref name="scale"/>.</returns>
         public double As(En scale) => Duplicate().Convert(scale).Converted.Magnitude;
 
+        /// <summary>
+        /// Returns a new <see cref="HyperUnit{Str, En}"/> representing the current measurement squared (raised to the power of 2).
+        /// </summary>
+        /// <returns>
+        /// A <see cref="HyperUnit{Str, En}"/> instance resulting from self-multiplication, effectively doubling the dimensional degree.
+        /// </returns>
         public HyperUnit<Str, En> Squared() => this * this;
+        /// <summary>
+        /// Returns a new <see cref="HyperUnit{Str, En}"/> representing the current measurement cubed (raised to the power of 3).
+        /// </summary>
+        /// <returns>
+        /// A <see cref="HyperUnit{Str, En}"/> instance resulting from multiplying this measurement by itself twice, tripling the dimensional degree.
+        /// </returns>
         public HyperUnit<Str, En> Cubed() => this * this * this;
+        /// <summary>
+        /// Raises the current measurement to an integer exponent, adjusting both its magnitude and dimensional degree accordingly.
+        /// </summary>
+        /// <param name="exp">The integer exponent to raise the unit measurement to.</param>
+        /// <returns>
+        /// A new <see cref="HyperUnit{Str, En}"/> instance with its normalized magnitude raised to <paramref name="exp"/> 
+        /// and its dimension scaled by <paramref name="exp"/>.
+        /// </returns>
+        /// <remarks>
+        /// The operation normalizes the base magnitude before applying <see cref="Math.Pow(double, double)"/> to maintain consistent scale semantics across hyper-dimensional transformations.
+        /// </remarks>
         public HyperUnit<Str, En> Pow(int exp)
             => new HyperUnit<Str, En>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
 
+        /// <summary>
+        /// Calculates the square root of the 2D measurement, reducing it back to its 1D fundamental linear unit <typeparamref name="Str"/>.
+        /// </summary>
+        /// <returns>
+        /// A new 1D unit instance of <typeparamref name="Str"/> initialized with the square root of this measurement's normalized magnitude.
+        /// </returns>
         public Str Sqrt()
             => Str.Create(Math.Sqrt(Normalized.Magnitude));
 
+        /// <summary>
+        /// Converts the current 2D measurement into a generalized, dynamic-dimensional <see cref="HyperUnit{Str, En}"/> representation.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="HyperUnit{Str, En}"/> instance carrying the original magnitude, scale, and dimensional degree of <c>2</c>.
+        /// </returns>
         public HyperUnit<Str, En> ToHyperUnit()
             => new HyperUnit<Str, En>(Original.Magnitude, Original.Scale).SetDimension(Dimension);
         #endregion
@@ -183,17 +332,69 @@ namespace JunX
         #endregion
 
         #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        /// <summary>
+        /// Multiplies a 2D squared unit measurement (<see cref="UnitSquared{Str, En}"/>) by a 1D linear unit measurement (<typeparamref name="Str"/>) 
+        /// to yield a 3D cubed unit measurement (<see cref="UnitCubed{Str, En}"/>).
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand.</param>
+        /// <param name="r">The right-hand 1D unit operand.</param>
+        /// <returns>
+        /// A new <see cref="UnitCubed{Str, En}"/> instance initialized with the product of their normalized magnitudes.
+        /// </returns>
         public static UnitCubed<Str, En> operator *(UnitSquared<Str, En> l, Str r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        /// <summary>
+        /// Multiplies two 2D squared unit measurements to produce a 4D generalized hyper-dimensional unit (<see cref="HyperUnit{Str, En}"/>).
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand.</param>
+        /// <param name="r">The right-hand 2D squared unit operand.</param>
+        /// <returns>
+        /// A new <see cref="HyperUnit{Str, En}"/> instance with a dimension of 4 and a magnitude equal to the product of their normalized magnitudes.
+        /// </returns>
         public static HyperUnit<Str, En> operator *(UnitSquared<Str, En> l, UnitSquared<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
+        /// <summary>
+        /// Multiplies a 2D squared unit measurement by a 3D cubed unit measurement (<see cref="UnitCubed{Str, En}"/>) 
+        /// to produce a 5D generalized hyper-dimensional unit (<see cref="HyperUnit{Str, En}"/>).
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand.</param>
+        /// <param name="r">The right-hand 3D cubed unit operand.</param>
+        /// <returns>
+        /// A new <see cref="HyperUnit{Str, En}"/> instance with a dimension of 5 and a magnitude equal to the product of their normalized magnitudes.
+        /// </returns>
         public static HyperUnit<Str, En> operator *(UnitSquared<Str, En> l, UnitCubed<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
+        /// <summary>
+        /// Multiplies a 2D squared unit measurement by a generalized hyper-dimensional unit (<see cref="HyperUnit{Str, En}"/>), 
+        /// adding their dimensions together.
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand.</param>
+        /// <param name="r">The right-hand hyper-dimensional unit operand.</param>
+        /// <returns>
+        /// A new <see cref="HyperUnit{Str, En}"/> instance whose dimension is increased by 2 and whose magnitude is the product of their normalized magnitudes.
+        /// </returns>
         public static HyperUnit<Str, En> operator *(UnitSquared<Str, En> l, HyperUnit<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
 
+        /// <summary>
+        /// Divides a 2D squared unit measurement (<see cref="UnitSquared{Str, En}"/>) by a 1D linear unit measurement (<typeparamref name="Str"/>) 
+        /// to perform dimensional reduction back to a 1D linear unit.
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand (dividend).</param>
+        /// <param name="r">The right-hand 1D linear unit operand (divisor).</param>
+        /// <returns>
+        /// A new 1D linear unit instance of <typeparamref name="Str"/> initialized with the quotient of their normalized magnitudes.
+        /// </returns>
         public static Str operator /(UnitSquared<Str, En> l, Str r)
             => Str.Create(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        /// <summary>
+        /// Divides a 2D squared unit measurement by another 2D squared unit measurement to produce a dimensionless scalar ratio.
+        /// </summary>
+        /// <param name="l">The left-hand 2D squared unit operand (dividend).</param>
+        /// <param name="r">The right-hand 2D squared unit operand (divisor).</param>
+        /// <returns>
+        /// A <see cref="double"/> scalar value representing the ratio of the normalized magnitudes.
+        /// </returns>
         public static double operator /(UnitSquared<Str, En> l, UnitSquared<Str, En> r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion   
