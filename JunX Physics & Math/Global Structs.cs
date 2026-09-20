@@ -912,6 +912,39 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a composite, binary quotient measurement consisting of a numerator unit component divided by a 
+    /// denominator unit component (<typeparamref name="Str1"/> / <typeparamref name="Str2"/>), providing strongly typed 
+    /// cross-unit arithmetic, scale management, and dimensional reduction.
+    /// </summary>
+    /// <typeparam name="Str1">
+    /// The underlying structure type representing the numerator unit factor in the quotient measurement.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En1">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str1"/>.
+    /// </typeparam>
+    /// <typeparam name="Str2">
+    /// The underlying structure type representing the denominator unit factor in the quotient measurement.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En2">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str2"/>.
+    /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="QuotientUnit{Str1, En1, Str2, En2}"/> models derived physical quantities formed by dividing two distinct 
+    /// unit factors (e.g., Distance / Time for Velocity, or Force / Area for Pressure). It maintains separate scale configurations 
+    /// and ordinal indices for both numerator and denominator factors while exposing algebraic operations.
+    /// </para>
+    /// <para>
+    /// The struct supports algebraic dimensional reductions, such as multiplying by a denominator unit (<typeparamref name="Str2"/>) 
+    /// to yield the numerator unit (<typeparamref name="Str1"/>), or dividing a numerator unit (<typeparamref name="Str1"/>) 
+    /// by the quotient to isolate the denominator unit (<typeparamref name="Str2"/>). Self-arithmetic, cross-multiplication, and 
+    /// relational comparisons validate scale matching across component factors using cached ordinal comparisons, throwing an 
+    /// <see cref="InvalidOperationException"/> if scale mismatches occur.
+    /// </para>
+    /// </remarks>
     public struct QuotientUnit<Str1, En1, Str2, En2> :
         IDimensionAccessible,
         IInitializable<QuotientUnit<Str1, En1, Str2, En2>>,
@@ -1103,6 +1136,30 @@ namespace JunX
             => r * l;
         public static QuotientUnit<Str1, En1, Str2, En2> operator /(QuotientUnit<Str1, En1, Str2, En2> l, double r)
             => QuotientUnit<Str1, En1, Str2, En2>.Create(l.Original.Magnitude / r).SetScales(l.Original.Scale1, l.Original.Scale2);
+        #endregion
+
+        #region CROSS-UNIT ARITHMETIC OPERATORS
+        public static QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> operator *(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2>.Create(l.Original.Magnitude * r.Original.Magnitude).SetScales(l.Original.Scale1, r.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static QuotientUnit<UnitSquared<Str1, En1>, En1, Str2, En2> operator *(QuotientUnit<Str1, En1, Str2, En2> l, Str1 r)
+            => l.Original.Scale1Ordinal == r.Original.ScaleOrdinal ?
+            QuotientUnit<UnitSquared<Str1, En1>, En1, Str2, En2>.Create(l.Original.Magnitude * r.Original.Magnitude).SetScales(r.Original.Scale, l.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static Str1 operator *(QuotientUnit<Str1, En1, Str2, En2> l, Str2 r)
+            => l.Original.Scale2Ordinal == r.Original.ScaleOrdinal ?
+            Str1.Create(l.Original.Magnitude * r.Original.Magnitude, l.Original.Scale1) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+        public static double operator /(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            l.Original.Magnitude / r.Original.Magnitude :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static Str2 operator /(Str1 l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.Original.ScaleOrdinal == r.Original.Scale1Ordinal ?
+            Str2.Create(l.Original.Magnitude / r.Original.Magnitude, r.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
         #endregion
     }
 }
