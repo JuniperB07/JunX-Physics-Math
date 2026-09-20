@@ -1169,6 +1169,36 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Provides a static domain utility and state container for performing complex higher-order algebraic divisions 
+    /// and multiplications on two-factor composite measurements (<typeparamref name="Str1"/> and <typeparamref name="Str2"/>).
+    /// </summary>
+    /// <typeparam name="Str1">
+    /// The underlying structure type representing the first linear or primary unit factor.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En1">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str1"/>.
+    /// </typeparam>
+    /// <typeparam name="Str2">
+    /// The underlying structure type representing the second linear or secondary unit factor.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En2">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str2"/>.
+    /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="BinaryCompositeUnit{Str1, En1, Str2, En2}"/> acts as a specialized computational hub for advanced 
+    /// dimensional reduction algorithms that exceed standard binary operator overloads. It models algebraic expressions 
+    /// involving higher powers of composite factors—such as dividing squared-factor products (<c>A²B / A</c>, <c>A(B²) / B²</c>, 
+    /// or <c>A²B² / A²</c>) and performing cancellation operations on quotient units (<c>(A / B²) * B</c> or <c>A / (A / B²)</c>).
+    /// </para>
+    /// <para>
+    /// All static operation methods enforce strict unit scale matching between operands by verifying ordinal index equality, 
+    /// throwing an <see cref="InvalidOperationException"/> when unit scale mismatches are detected.
+    /// </para>
+    /// </remarks>
     public struct BinaryCompositeUnit<Str1, En1, Str2, En2> :
         IDimensionAccessible,
         IInitializable<BinaryCompositeUnit<Str1, En1, Str2, En2>, double>,

@@ -51,4 +51,34 @@ namespace JunX
         public override CompositeOperators Operator => CompositeOperators.Division;
     }
     #endregion
+
+    public static class CompositeReductions<Str1, En1, Str2, En2, Str3, En3>
+        where En1 : Enum
+        where En2 : Enum
+        where En3 : Enum
+        where Str1 : struct, IDimensionAccessible,
+            IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
+            INormalized<En1>, INormalizable<Str1>,
+            IScaleConvertible<Str1, En1>, IValueAccessible<En1>
+        where Str2 : struct, IDimensionAccessible,
+            IInitializable<Str2>, IInitializable<Str2, double>, IInitializable<Str2, double, En2>,
+            INormalized<En2>, INormalizable<Str2>,
+            IScaleConvertible<Str2, En2>, IValueAccessible<En2>
+        where Str3 : struct, IDimensionAccessible,
+            IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+            INormalized<En3>, INormalizable<Str3>,
+            IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+    {
+        public static QuotientUnit<Str2, En2, Str3, En3> Divide(ProductUnit<Str1, En1, Str2, En2> l, ProductUnit<Str1, En1, Str3, En3> r)
+        {// AB / AC     =   B/C
+
+            if (l.Original.Scale1Ordinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale2, r.Original.Scale2);
+        }
+
+    }
 }
