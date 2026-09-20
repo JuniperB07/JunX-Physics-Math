@@ -1056,5 +1056,17 @@ namespace JunX
             return Original.Magnitude == other.Original.Magnitude;
         }
         #endregion
+
+        #region OVERRIDES
+        [Obsolete]
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
     }
 }
