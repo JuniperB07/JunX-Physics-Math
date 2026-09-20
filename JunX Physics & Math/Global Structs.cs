@@ -1087,5 +1087,22 @@ namespace JunX
         public static bool operator >=(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
             => l > r || l == r;
         #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static QuotientUnit<Str1, En1, Str2, En2> operator +(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            QuotientUnit<Str1, En1, Str2, En2>.Create(l.Original.Magnitude + r.Original.Magnitude).SetScales(l.Original.Scale1, l.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static QuotientUnit<Str1, En1, Str2, En2> operator -(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => l.IsEqualScales(r) ?
+            QuotientUnit<Str1, En1, Str2, En2>.Create(l.Original.Magnitude - r.Original.Magnitude).SetScales(l.Original.Scale1, l.Original.Scale2) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static QuotientUnit<Str1, En1, Str2, En2> operator *(QuotientUnit<Str1, En1, Str2, En2> l, double r)
+            => QuotientUnit<Str1, En1, Str2, En2>.Create(l.Original.Magnitude * r).SetScales(l.Original.Scale1, l.Original.Scale2);
+        public static QuotientUnit<Str1, En1, Str2, En2> operator *(double l, QuotientUnit<Str1, En1, Str2, En2> r)
+            => r * l;
+        public static QuotientUnit<Str1, En1, Str2, En2> operator /(QuotientUnit<Str1, En1, Str2, En2> l, double r)
+            => QuotientUnit<Str1, En1, Str2, En2>.Create(l.Original.Magnitude / r).SetScales(l.Original.Scale1, l.Original.Scale2);
+        #endregion
     }
 }
