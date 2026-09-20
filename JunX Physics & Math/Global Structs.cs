@@ -774,7 +774,7 @@ namespace JunX
         }
 
         public ProductUnit<Str2, En2, Str1, En1> Commute()
-            => new ProductUnit<Str2, En2, Str1, En1>(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+            => ProductUnit<Str2, En2, Str1, En1>.Create(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
         
         public bool IsEqualTypeParams<Str3, En3, Str4, En4>(ProductUnit<Str3, En3, Str4, En4> other)
             where Str3 : struct, IDimensionAccessible,
@@ -908,6 +908,152 @@ namespace JunX
 
             double res = l.Original.Magnitude / r.Original.Magnitude;
             return Str2.Create(res, l.Original.Scale2);
+        }
+        #endregion
+    }
+
+    public struct QuotientUnit<Str1, En1, Str2, En2> :
+        IDimensionAccessible,
+        IInitializable<QuotientUnit<Str1, En1, Str2, En2>>,
+        IInitializable<QuotientUnit<Str1, En1, Str2, En2>, double>,
+        IInitializable<QuotientUnit<Str1, En1, Str2, En2>, double, En1>,
+        IDuplicatable<QuotientUnit<Str1, En1, Str2, En2>>,
+        IEquatable<QuotientUnit<Str1, En1, Str2, En2>>
+
+        where Str1 : struct, IDimensionAccessible,
+            IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
+            INormalized<En1>, INormalizable<Str1>,
+            IScaleConvertible<Str1, En1>, IValueAccessible<En1>
+        where Str2 : struct, IDimensionAccessible,
+            IInitializable<Str2>, IInitializable<Str2, double>, IInitializable<Str2, double, En2>,
+            INormalized<En2>, INormalizable<Str2>,
+            IScaleConvertible<Str2, En2>, IValueAccessible<En2>
+        where En1 : Enum
+        where En2 : Enum
+    {
+        #region PROPERTIES
+        private static int BaseScale1Ordinal
+        {
+            get
+            {
+                En1 bs1 = BaseScale1;
+                return Unsafe.As<En1, int>(ref bs1);
+            }
+        }
+        private static int BaseScale2Ordinal
+        {
+            get
+            {
+                En2 bs2 = BaseScale2;
+                return Unsafe.As<En2, int>(ref bs2);
+            }
+        }
+
+        public int Dimension => 1;
+
+        public static En1 BaseScale1 => Str1.BaseScale;
+        public static En2 BaseScale2 => Str2.BaseScale;
+
+        public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
+
+        public Type Struct1 = typeof(Str1);
+        public Type Struct2 = typeof(Str2);
+        public Type Enum1 = typeof(En1);
+        public Type Enum2 = typeof(En2);
+        #endregion
+
+        #region CONSTRUCTORS
+        public QuotientUnit()
+        {
+            Original = (0, BaseScale1, BaseScale2, BaseScale1Ordinal, BaseScale2Ordinal);
+        }
+        public QuotientUnit(QuotientUnit<Str1, En1, Str2, En2> instance)
+        {
+            this = instance;
+        }
+        public QuotientUnit(double magnitude)
+        {
+            Original = (magnitude, BaseScale1, BaseScale2, BaseScale1Ordinal, BaseScale2Ordinal);
+        }
+        public QuotientUnit(double magnitude, En1 scale1)
+        {
+            Original = (magnitude, scale1, BaseScale2, Unsafe.As<En1, int>(ref scale1), BaseScale2Ordinal);
+        }
+        #endregion
+
+        #region METHODS
+        public static QuotientUnit<Str1, En1, Str2, En2> Initialize() => new();
+        public static QuotientUnit<Str1, En1, Str2, En2> Create(QuotientUnit<Str1, En1, Str2, En2> instance)
+            => new(instance);
+        public static QuotientUnit<Str1, En1, Str2, En2> Create(double magnitude) => new(magnitude);
+        public static QuotientUnit<Str1, En1, Str2, En2> Create(double magnitude, En1 scale1) => new(magnitude, scale1);
+
+
+        public QuotientUnit<Str1, En1, Str2, En2> SetScale1(En1 scale1)
+        {
+            (double mag, En2 s2, int s2Ord) orig = (Original.Magnitude, Original.Scale2, Original.Scale2Ordinal);
+
+            Original = (orig.mag, scale1, orig.s2, Unsafe.As<En1, int>(ref scale1), orig.s2Ord);
+            return this;
+        }
+        public QuotientUnit<Str1, En1, Str2, En2> SetScale2(En2 scale2)
+        {
+            (double mag, En1 s1, int s1Ord) orig = (Original.Magnitude, Original.Scale1, Original.Scale1Ordinal);
+
+            Original = (orig.mag, orig.s1, scale2, orig.s1Ord, Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
+        public QuotientUnit<Str1, En1, Str2, En2> SetScales(En1 scale1, En2 scale2)
+        {
+            double mag = Original.Magnitude;
+
+            Original = (mag, scale1, scale2, Unsafe.As<En1, int>(ref scale1), Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
+
+        public QuotientUnit<Str1, En1, Str2, En2> Duplicate() => new(this);
+        public bool Equals(QuotientUnit<Str1, En1, Str2, En2> pu)
+        {
+            if (Original.Scale1Ordinal != pu.Original.Scale1Ordinal || Original.Scale2Ordinal != pu.Original.Scale2Ordinal)
+                return false;
+
+            return Original.Magnitude == pu.Original.Magnitude;
+        }
+
+        public bool IsEqualTypeParams<Str3, En3, Str4, En4>(QuotientUnit<Str3, En3, Str4, En4> other)
+            where Str3 : struct, IDimensionAccessible,
+                IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+                INormalized<En3>, INormalizable<Str3>,
+                IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+            where Str4 : struct, IDimensionAccessible,
+                IInitializable<Str4>, IInitializable<Str4, double>, IInitializable<Str4, double, En4>,
+                INormalized<En4>, INormalizable<Str4>,
+                IScaleConvertible<Str4, En4>, IValueAccessible<En4>
+            where En3 : Enum
+            where En4 : Enum
+        {
+            return
+                (Struct1 == other.Struct1 && Struct2 == other.Struct2) &&
+                (Enum1 == other.Enum1 && Enum2 == other.Enum2);
+        }
+        public bool IsEqualScales(QuotientUnit<Str1, En1, Str2, En2> other)
+            => Original.Scale1Ordinal == other.Original.Scale1Ordinal && Original.Scale2Ordinal == other.Original.Scale2Ordinal;
+        public bool IsEqualTo<Str3, En3, Str4, En4>(QuotientUnit<Str3, En3, Str4, En4> other)
+            where Str3 : struct, IDimensionAccessible,
+                IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+                INormalized<En3>, INormalizable<Str3>,
+                IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+            where Str4 : struct, IDimensionAccessible,
+                IInitializable<Str4>, IInitializable<Str4, double>, IInitializable<Str4, double, En4>,
+                INormalized<En4>, INormalizable<Str4>,
+                IScaleConvertible<Str4, En4>, IValueAccessible<En4>
+            where En3 : Enum
+            where En4 : Enum
+        {
+            if (!IsEqualTypeParams(other))
+                return false;
+
+            return Original.Magnitude == other.Original.Magnitude;
         }
         #endregion
     }
