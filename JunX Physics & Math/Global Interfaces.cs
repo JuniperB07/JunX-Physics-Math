@@ -276,4 +276,8 @@ namespace JunX
         public (En1 Scale1, En2 Scale2) ScaleValues { get; }
     }
     #endregion
+
+    #region COMPOSITE UNIT
+    public interface ICompositeUnit { }
+    #endregion
 }
