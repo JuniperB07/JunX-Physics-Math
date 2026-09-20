@@ -17,7 +17,7 @@ namespace JunX
     /// provide static creation patterns, enabling generic algorithms to construct instances of <typeparamref name="T"/> 
     /// without relying on reflection or instantiating factory objects.
     /// </remarks>
-    public interface IInitializable<T> where T: struct
+    public interface IInitializable<T>
     {
         /// <summary>
         /// Initializes and returns a default or starting instance of <typeparamref name="T"/>.
@@ -51,7 +51,7 @@ namespace JunX
     /// on value types, allowing generic code to instantiate <typeparamref name="T"/> directly from 
     /// an argument of type <typeparamref name="T1"/> without reflection overhead or runtime factory allocations.
     /// </remarks>
-    public interface IInitializable<T, T1> where T : struct
+    public interface IInitializable<T, T1>
     {
         /// <summary>
         /// Creates and returns a new instance of <typeparamref name="T"/> using the provided input argument.
@@ -81,7 +81,7 @@ namespace JunX
     /// on value types, enabling generic algorithms to instantiate <typeparamref name="T"/> directly from input arguments 
     /// without reflection overhead or runtime factory allocations.
     /// </remarks>
-    public interface IInitializable<T, T1, T2> where T : struct
+    public interface IInitializable<T, T1, T2>
     {
         /// <summary>
         /// Creates and returns a new instance of <typeparamref name="T"/> using the provided input arguments.
@@ -117,7 +117,7 @@ namespace JunX
     /// on value types, enabling generic algorithms to instantiate <typeparamref name="T"/> directly from input arguments 
     /// without reflection overhead or runtime factory allocations.
     /// </remarks>
-    public interface IInitializable<T, T1, T2, T3> where T : struct
+    public interface IInitializable<T, T1, T2, T3>
     {
         /// <summary>
         /// Creates and returns a new instance of <typeparamref name="T"/> using the provided input arguments.
@@ -159,7 +159,7 @@ namespace JunX
     /// on value types, enabling generic algorithms to instantiate <typeparamref name="T"/> directly from input arguments 
     /// without reflection overhead or runtime factory allocations.
     /// </remarks>
-    public interface IInitializable<T, T1, T2, T3, T4> where T : struct
+    public interface IInitializable<T, T1, T2, T3, T4>
     {
         /// <summary>
         /// Creates and returns a new instance of <typeparamref name="T"/> using the provided input arguments.
