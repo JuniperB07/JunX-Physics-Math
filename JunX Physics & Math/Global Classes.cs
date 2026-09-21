@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data.SqlTypes;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -59,5 +60,9 @@ namespace JunX
     public class CompositeQuotient<Str1, Str2> : ICompositeUnit
         where Str1 : struct, IDimensionAccessible, INormalizable<Str1>
         where Str2 : struct, IDimensionAccessible, INormalizable<Str2>
+    { }
+    public class BinaryComposite<TComp1, TComp2> : ICompositeUnit
+        where TComp1 : class, ICompositeUnit
+        where TComp2 : class, ICompositeUnit
     { }
 }

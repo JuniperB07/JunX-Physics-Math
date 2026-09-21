@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Quic;
 using System.Net.Sockets;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
@@ -1607,7 +1608,7 @@ namespace JunX
             IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
             INormalized<En3>, INormalizable<Str3>,
             IScaleConvertible<Str3, En3>, IValueAccessible<En3>
-        where TComp : ICompositeUnit
+        where TComp : class, ICompositeUnit
     {
         #region PROPERTIES
         private static int BaseScale1Ordinal
@@ -1675,6 +1676,8 @@ namespace JunX
             var unit = TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
             return unit.SetScales(l.Original.Scale1, l.Original.Scale2, r.Original.Scale);
         }
+        public static TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> Multiply
+            (Str3 l, ProductUnit<Str1, En1, Str2, En2> r) => Multiply(r, l);
         public static ProductUnit<Str1, En1, Str2, En2> Divide
             (TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> l,
             Str3 r)
@@ -1750,7 +1753,148 @@ namespace JunX
         #endregion
 
         #region FOR: A/B * C
-        
+        public static TernaryQuotientUnit<CompositeQuotient<Str1, Str3>, Str1, En1, Str2, En2, Str3, En3> Multiply
+            (QuotientUnit<Str1, En1, Str2, En2> l, Str3 r)
+        {// AC/B    =   A/B * C
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            var unit = TernaryQuotientUnit<CompositeQuotient<Str1, Str3>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2, r.Original.Scale);
+        }
+        public static TernaryQuotientUnit<CompositeQuotient<Str1, Str3>, Str1, En1, Str2, En2, Str3, En3> Multiply
+            (Str3 l, QuotientUnit<Str1, En1, Str2, En2> r) => Multiply(r, l);
+        #endregion
+    }
+
+    public struct TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> :
+        IDimensionAccessible,
+        IInitializable<TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3>, double>,
+        ICompositeUnit
+
+        where En1 : Enum
+        where En2 : Enum
+        where En3 : Enum
+        where Str1 : struct, IDimensionAccessible,
+            IInitializable<Str1>, IInitializable<Str1, double>, IInitializable<Str1, double, En1>,
+            INormalized<En1>, INormalizable<Str1>,
+            IScaleConvertible<Str1, En1>, IValueAccessible<En1>
+        where Str2 : struct, IDimensionAccessible,
+            IInitializable<Str2>, IInitializable<Str2, double>, IInitializable<Str2, double, En2>,
+            INormalized<En2>, INormalizable<Str2>,
+            IScaleConvertible<Str2, En2>, IValueAccessible<En2>
+        where Str3 : struct, IDimensionAccessible,
+            IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
+            INormalized<En3>, INormalizable<Str3>,
+            IScaleConvertible<Str3, En3>, IValueAccessible<En3>
+        where TComp : class, ICompositeUnit
+    {
+        #region PROPERTIES
+        private static int BaseScale1Ordinal
+        {
+            get
+            {
+                En1 bs1 = BaseScale1;
+                return Unsafe.As<En1, int>(ref bs1);
+            }
+        }
+        private static int BaseScale2Ordinal
+        {
+            get
+            {
+                En2 bs2 = BaseScale2;
+                return Unsafe.As<En2, int>(ref bs2);
+            }
+        }
+        private static int BaseScale3Ordinal
+        {
+            get
+            {
+                En3 bs3 = BaseScale3;
+                return Unsafe.As<En3, int>(ref bs3);
+            }
+        }
+
+        public int Dimension => 1;
+
+        public double Magnitude { get; private set; }
+        public (En1 Scale1, En2 Scale2, En3 Scale3, int Ordinal1, int Ordinal2, int Ordinal3) Scales { get; private set; }
+
+        public static En1 BaseScale1 => Str1.BaseScale;
+        public static En2 BaseScale2 => Str2.BaseScale;
+        public static En3 BaseScale3 => Str3.BaseScale;
+        #endregion
+
+        #region CONSTRUCTORS
+        public TernaryQuotientUnit(double magnitude)
+        {
+            Magnitude = magnitude;
+            Scales = (BaseScale1, BaseScale2, BaseScale3,
+                BaseScale1Ordinal, BaseScale2Ordinal, BaseScale3Ordinal);
+        }
+        #endregion
+
+        #region METHODS
+        public static TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> Create(double magnitude) => new(magnitude);
+
+        public TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> SetScales(En1 scale1, En2 scale2, En3 scale3)
+        {
+            Scales = (scale1, scale2, scale3,
+                Unsafe.As<En1, int>(ref scale1),
+                Unsafe.As<En2, int>(ref scale2),
+                Unsafe.As<En3, int>(ref scale3));
+            return this;
+        }
+        #endregion
+
+        #region FOR: AB / C
+        public static TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> Divide
+            (ProductUnit<Str1, En1, Str2, En2> l, Str3 r)
+        {// AB/C    =   AB / C
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2, r.Original.Scale);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Multiply
+            (TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str3 r)
+        {// AB  =   (AB/C) * C
+
+            if (l.Scales.Ordinal3 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Multiply
+            (Str3 l,
+            TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> r)
+            => Multiply(r, l);
+        public static QuotientUnit<Str1, En1, Str3, En3> Divide
+            (Str2 l,
+            TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> r)
+        {// A/C =   B / (AB/C)
+
+            if (l.Original.ScaleOrdinal != r.Scales.Ordinal2)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale1, r.Scales.Scale3);
+        }
+        public static QuotientUnit<Str2, En2, Str3, En3> Divide
+            (Str1 l,
+            TernaryQuotientUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> r)
+        {// B/C =   A / (AB/C)
+
+            if (l.Original.ScaleOrdinal != r.Scales.Ordinal1)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = QuotientUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale2, r.Scales.Scale3);
+        }
+
         #endregion
     }
 }
