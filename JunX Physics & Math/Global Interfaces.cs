@@ -184,12 +184,12 @@ namespace JunX
     #endregion
 
     #region NORMALIZATIONS
-    public interface INormalized<En> where En: Enum
+    public interface INormalized<En> where En : Enum
     {
         (double Magnitude, En Scale, int ScaleOrdinal) Normalized { get; }
         static abstract En BaseScale { get; }
     }
-    public interface INormalizable<Str> where Str: struct
+    public interface INormalizable<Str> where Str : struct
     {
         Str Normalize();
     }
@@ -233,14 +233,14 @@ namespace JunX
     #endregion
 
     #region SCALE MAPPABILITY
-    public interface IScaleMappable<En> where En: Enum
+    public interface IScaleMappable<En> where En : Enum
     {
         static abstract Dictionary<En, double> Mapper { get; }
     }
     #endregion
 
     #region VALUE ACCESSIBILITY
-    public interface IValueAccessible<En> where En: Enum
+    public interface IValueAccessible<En> where En : Enum
     {
         (double Magnitude, En Scale, int ScaleOrdinal) Original { get; }
         (double Magnitude, En Scale, int ScaleOrdinal) Converted { get; }
@@ -249,8 +249,8 @@ namespace JunX
 
     #region SCALE CONVERTABILITY
     public interface IScaleConvertible<Str, En>
-        where Str: struct
-        where En: Enum
+        where Str : struct
+        where En : Enum
     {
         abstract Str Convert(En toScale);
         double As(En scale);
@@ -258,7 +258,7 @@ namespace JunX
     #endregion
 
     #region DUPLICATABILITY & VALIDATABILITY
-    public interface IDuplicatable<Str> where Str: struct
+    public interface IDuplicatable<Str> where Str : struct
     {
         Str Duplicate();
     }
@@ -270,8 +270,8 @@ namespace JunX
 
     #region SCALE VALUE ACCESSIBILITY
     public interface IScaleValueAccessible<En1, En2>
-        where En1: Enum
-        where En2: Enum
+        where En1 : Enum
+        where En2 : Enum
     {
         public (En1 Scale1, En2 Scale2) ScaleValues { get; }
     }
@@ -279,5 +279,17 @@ namespace JunX
 
     #region COMPOSITE UNIT
     public interface ICompositeUnit { }
+    #endregion
+
+    #region LINEAR UNITS
+    public interface ILinearUnit<TSelf, TEnum> :
+        IDimensionAccessible,
+        IInitializable<TSelf>, IInitializable<TSelf, double>, IInitializable<TSelf, double, TEnum>,
+        INormalized<TEnum>, INormalizable<TSelf>,
+        IScaleConvertible<TSelf, TEnum>, IValueAccessible<TEnum>
+
+        where TSelf : struct, ILinearUnit<TSelf, TEnum>
+        where TEnum : Enum
+    { }
     #endregion
 }

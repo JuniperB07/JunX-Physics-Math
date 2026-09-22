@@ -48,9 +48,9 @@ namespace JunX
         IExponentiable<HyperUnit<Str, En>>
 
         where En : Enum
-        where Str: struct, IDimensionAccessible,
+        where Str : struct, IDimensionAccessible,
             IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
-            INormalized<En>, INormalizable<Str>, 
+            INormalized<En>, INormalizable<Str>,
             IScaleConvertible<Str, En>, IValueAccessible<En>
     {
         #region PROPERTIES
@@ -232,7 +232,7 @@ namespace JunX
         /// </remarks>
         public UnitSquared<Str, En> Convert(En toScale)
         {
-            if(toScale.Equals(Original.Scale))
+            if (toScale.Equals(Original.Scale))
             {
                 Converted = Original;
                 return this;
@@ -308,7 +308,7 @@ namespace JunX
             return base.GetHashCode();
         }
         #endregion
-        
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(UnitSquared<Str, En> l, UnitSquared<Str, En> r) => l.Equals(r);
         public static bool operator !=(UnitSquared<Str, En> l, UnitSquared<Str, En> r) => !l.Equals(r);
@@ -398,7 +398,23 @@ namespace JunX
         /// </returns>
         public static double operator /(UnitSquared<Str, En> l, UnitSquared<Str, En> r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
-        #endregion   
+        #endregion
+
+        #region A/(B^2)
+        public static UnitSquared<Str2, En2> Divide<Str2, En2>
+            (Str l,
+            QuotientUnit<Str, En, UnitSquared<Str2, En2>, En2> r)
+            where En2: Enum
+            where Str2: struct, ILinearUnit<Str2, En2>
+        {//     B^2 =   A / A/(B^2)
+
+            if (l.Original.ScaleOrdinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            return UnitSquared<Str2, En2>.Create(mag, r.Original.Scale2);
+        }
+        #endregion
     }
 
     /// <summary>
@@ -1115,6 +1131,49 @@ namespace JunX
             return Str2.Create(res, l.Original.Scale2);
         }
         #endregion
+
+        #region A(B^2) & (A^2)B
+        public static ProductUnit<Str1, En1, Str2, En2> Divide
+            (ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> l,
+            Str2 r)
+        {//    AB   =   A(B^2) / B
+
+            if (l.Original.Scale2Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Divide
+            (ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> l,
+            Str1 r)
+        {//     AB  =   (A^2)B / A
+
+            if (l.Original.Scale1Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(r.Original.Scale, l.Original.Scale2);
+        }
+        #endregion
+
+        #region (A^2)(B^2)
+        public static ProductUnit<Str1, En1, Str2, En2> operator /
+            (ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> l,
+            ProductUnit<Str1, En1, Str2, En2> r)
+        {//     AB  =   (A^2)(B^2) / AB
+
+            if (l.Original.Scale1Ordinal != r.Original.Scale1Ordinal ||
+                l.Original.Scale2Ordinal != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale2);
+        }
+        #endregion
     }
 
     /// <summary>
@@ -1261,6 +1320,9 @@ namespace JunX
             return Original.Magnitude == pu.Original.Magnitude;
         }
 
+        public QuotientUnit<Str2, En2, Str1, En1> Reciprocate()
+            => QuotientUnit<Str2, En2, Str1, En1>.Create(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+
         public bool IsEqualTypeParams<Str3, En3, Str4, En4>(QuotientUnit<Str3, En3, Str4, En4> other)
             where Str3 : struct, IDimensionAccessible,
                 IInitializable<Str3>, IInitializable<Str3, double>, IInitializable<Str3, double, En3>,
@@ -1369,38 +1431,27 @@ namespace JunX
             Str2.Create(l.Original.Magnitude / r.Original.Magnitude, r.Original.Scale2) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
         #endregion
+
+        #region A/(B^2)
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply
+            (QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2> l,
+            Str2 r)
+        {//     A/B =   A/(B*2) * B
+
+            if (l.Original.Scale2Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply
+            (Str2 l,
+            QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2> r)
+            => Multiply(r, l);
+        #endregion
     }
 
-    /// <summary>
-    /// Provides a static domain utility and state container for performing complex higher-order algebraic divisions 
-    /// and multiplications on two-factor composite measurements (<typeparamref name="Str1"/> and <typeparamref name="Str2"/>).
-    /// </summary>
-    /// <typeparam name="Str1">
-    /// The underlying structure type representing the first linear or primary unit factor.
-    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
-    /// </typeparam>
-    /// <typeparam name="En1">
-    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str1"/>.
-    /// </typeparam>
-    /// <typeparam name="Str2">
-    /// The underlying structure type representing the second linear or secondary unit factor.
-    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
-    /// </typeparam>
-    /// <typeparam name="En2">
-    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str2"/>.
-    /// </typeparam>
-    /// <remarks>
-    /// <para>
-    /// <see cref="BinaryCompositeUnit{Str1, En1, Str2, En2}"/> acts as a specialized computational hub for advanced 
-    /// dimensional reduction algorithms that exceed standard binary operator overloads. It models algebraic expressions 
-    /// involving higher powers of composite factors—such as dividing squared-factor products (<c>A²B / A</c>, <c>A(B²) / B²</c>, 
-    /// or <c>A²B² / A²</c>) and performing cancellation operations on quotient units (<c>(A / B²) * B</c> or <c>A / (A / B²)</c>).
-    /// </para>
-    /// <para>
-    /// All static operation methods enforce strict unit scale matching between operands by verifying ordinal index equality, 
-    /// throwing an <see cref="InvalidOperationException"/> when unit scale mismatches are detected.
-    /// </para>
-    /// </remarks>
     public struct BinaryUnit<Str1, En1, Str2, En2> :
         IDimensionAccessible,
         IInitializable<BinaryUnit<Str1, En1, Str2, En2>, double>,
@@ -1453,67 +1504,13 @@ namespace JunX
         #region METHODS
         public static BinaryUnit<Str1, En1, Str2, En2> Create(double magnitude) => new(magnitude);
 
-        public static ProductUnit<Str1, En1, Str2, En2> Divide(ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> left, Str2 right)
-        { //    A(B^2) / B      =   AB
-
-            if (left.Original.Scale2Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
-            return unit.SetScales(left.Original.Scale1, right.Original.Scale);
-        }
-        public static ProductUnit<Str1, En1, Str2, En2> Divide(ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> left, Str1 right)
-        {// (A^2)B / A      =   AB
-
-            if (left.Original.Scale1Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
-            return unit.SetScales(right.Original.Scale, left.Original.Scale2);
-        }
-        public static UnitSquared<Str2, En2> Divide(ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> left, Str1 right)
-        {// A(B^2) / A      =   B^2
-
-            if (left.Original.Scale1Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            return UnitSquared<Str2, En2>.Create(mag, left.Original.Scale2);
-        }
-        public static UnitSquared<Str1, En1> Divide(ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> left, Str2 right)
-        {// (A^2)B / B      =   A^2
-
-            if (left.Original.Scale2Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            return UnitSquared<Str1, En1>.Create(mag, left.Original.Scale1);
-        }
-        public static Str1 Divide(ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> left, UnitSquared<Str2, En2> right)
-        {// A(B^2) / B^2    =   A
-
-            if (left.Original.Scale2Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            return Str1.Create(mag, left.Original.Scale1);
-        }
-        public static Str2 Divide(ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> left, UnitSquared<Str1, En1> right)
-        {// (A^2)B / A^2    =   B
-
-            if (left.Original.Scale1Ordinal != right.Original.ScaleOrdinal)
-                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
-
-            double mag = left.Original.Magnitude / right.Original.Magnitude;
-
-            return Str2.Create(mag, left.Original.Scale2);
+        public BinaryUnit<Str1, En1, Str2, En2> SetScales(En1 scale1, En2 scale2)
+        {
+            double mag = Components.Magnitude;
+            Components = (mag, scale1, scale2,
+                Unsafe.As<En1, int>(ref scale1),
+                Unsafe.As<En2, int>(ref scale2));
+            return this;
         }
 
         public static ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> Divide(ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> left, Str1 right)

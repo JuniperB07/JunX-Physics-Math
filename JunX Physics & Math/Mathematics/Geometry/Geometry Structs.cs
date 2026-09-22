@@ -13,7 +13,8 @@ namespace JunX.Mathematics.Geometry
         IValueAccessible<LengthUnits>,
         IDuplicatable<Length>,
         IEquatable<Length>,
-        IValidatable
+        IValidatable,
+        ILinearUnit<Length, LengthUnits>
     {
         private readonly double _m;
 
