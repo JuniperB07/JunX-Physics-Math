@@ -10,12 +10,40 @@ using System.Xml.XPath;
 
 namespace JunX
 {
+    /// <summary>
+    /// Provides general-purpose static utility methods for scale transformation and value mapping 
+    /// across unit scale enumerations within the dimensional framework.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <see cref="Methods"/> class serves as a centralized helper class for performing low-level scalar 
+    /// scaling operations using enumeration-based conversion mappers. 
+    /// </para>
+    /// <para>
+    /// It complements the static abstract interface methods of primary unit types by offering flexible, 
+    /// dictionary-backed scale conversions for generic enumeration values without requiring full 1D unit struct instantiation.
+    /// </para>
+    /// </remarks>
     public static class Methods
     {
         public static double Scale<T>(double magnitude, T scale, Dictionary<T, double> mapper) where T : Enum
             => magnitude * mapper[scale];
     }
 
+    /// <summary>
+    /// Provides centralized error message constants used for exception handling across the dimensional analysis framework.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <see cref="ErrorMsg"/> class defines standard string constants thrown in runtime exceptions (such as 
+    /// <see cref="InvalidOperationException"/> or <see cref="ArgumentException"/>) when dimensional constraints, 
+    /// scale matching rules, or type safety requirements are violated.
+    /// </para>
+    /// <para>
+    /// Centralizing these messages ensures consistent error reporting across single-dimensional, multidimensional, 
+    /// and higher-order composite unit operations.
+    /// </para>
+    /// </remarks>
     public static class ErrorMsg
     {
         public const string OPERAND_DIMENSION_MISMATCH = "Cannot operate on operands with different dimensions.";
@@ -27,6 +55,22 @@ namespace JunX
 
     }
 
+    /// <summary>
+    /// Indicates that a generic structure or class requires two distinct unit scale enumeration types 
+    /// at the specified generic type argument positions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This attribute is used by code generation tools, source generators, and static analyzers 
+    /// within the framework to enforce design-time validation on composite unit types. It ensures 
+    /// that generic parameters representing unit scales (e.g., <c>TEnum1</c> and <c>TEnum2</c>) are not 
+    /// inadvertently instantiated with the same enumeration type when distinct scales are required.
+    /// </para>
+    /// <para>
+    /// By default, it targets the generic type arguments at 1-based indices 1 and 3 (typically corresponding 
+    /// to <c>En1</c> and <c>En2</c> in multi-factor composite unit signatures).
+    /// </para>
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class DistinctEnumTypesAttribute : Attribute
     {
@@ -41,6 +85,22 @@ namespace JunX
     }
 
     #region COMPOSITE OPERATOR CLASSES
+    /// <summary>
+    /// Provides an abstract base definition and static evaluation dispatch hub for higher-order composite 
+    /// unit operators, transmutations, and multi-factor algebraic reductions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="CompositeOperator"/> serves as a core computational engine for multi-factor dimensional algebra. 
+    /// It implements generic static transformations across complex composite structures, including nested quotient transmutations, 
+    /// higher-power reductions (e.g., dividing squared-product units <c>A²B² / A</c> or multiplying squared-quotients <c>(A²/B²) * B</c>), 
+    /// and quaternary-to-ternary product reductions (<c>ABCD / D</c>).
+    /// </para>
+    /// <para>
+    /// All static operation methods enforce scale consistency across constituent unit terms by checking ordinal scale matching, 
+    /// throwing an <see cref="InvalidOperationException"/> when scale mismatches are encountered.
+    /// </para>
+    /// </remarks>
     public abstract class CompositeOperator
     {
         public abstract CompositeOperators Operator { get; }
@@ -139,17 +199,78 @@ namespace JunX
 
         #endregion
 
+        #region AB * CD
+        public static TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3, Str4, En4>
+            (QuaternaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3, Str4, En4> l,
+            Str4 r)
+            where En1: Enum
+            where En2: Enum
+            where En3: Enum
+            where En4: Enum
+            where Str1: struct, ILinearUnit<Str1, En1>
+            where Str2: struct, ILinearUnit<Str2, En2>
+            where Str3: struct, ILinearUnit<Str3, En3>
+            where Str4: struct, ILinearUnit<Str4, En4>
+        {//     ABC =   ABCD / D
+
+            if (l.Scales.Ordinal4 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude / r.Original.Magnitude;
+            var unit = TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2, l.Scales.Scale3);
+        }
+        #endregion
     }
 
+    /// <summary>
+    /// Represents a concrete composite operator strategy specializing in multi-factor multiplication operations across composite unit structures.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="CompositeMultiplication"/> inherits from <see cref="CompositeOperator"/> to identify and handle algebraic 
+    /// product evaluations within the dimensional framework's composite calculation pipeline.
+    /// </para>
+    /// <para>
+    /// It binds the abstract <see cref="CompositeOperator.Operator"/> property to <see cref="CompositeOperators.Multiplication"/>, 
+    /// allowing runtime and static operator dispatchers to categorize and execute multiplicative transmutations and compound factor reductions.
+    /// </para>
+    /// </remarks>
     public class CompositeMultiplication : CompositeOperator
     {
         public override CompositeOperators Operator => CompositeOperators.Multiplication;
     }
+    /// <summary>
+    /// Represents a concrete composite operator strategy specializing in multi-factor division operations across composite unit structures.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="CompositeDivision"/> inherits from <see cref="CompositeOperator"/> to identify and handle algebraic 
+    /// quotient evaluations within the dimensional framework's composite calculation pipeline.
+    /// </para>
+    /// <para>
+    /// It binds the abstract <see cref="CompositeOperator.Operator"/> property to <see cref="CompositeOperators.Division"/>, 
+    /// allowing runtime and static operator dispatchers to categorize and execute division transmutations and dimensional reductions.
+    /// </para>
+    /// </remarks>
     public class CompositeDivision : CompositeOperator
     {
         public override CompositeOperators Operator => CompositeOperators.Division;
 
     }
+    /// <summary>
+    /// Provides static reduction algorithms and mathematical operation delegates for higher-order composite unit structures.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <see cref="CompositeReductor"/> class handles mathematical reduction—specifically multiplication and division—across 
+    /// multi-variable unit types including squared structures, binary products, quotients, and ternary composite relationships.
+    /// </para>
+    /// <para>
+    /// It enforces strict ordinal scale compatibility across constituent terms before executing magnitude arithmetic, ensuring 
+    /// complex algebraic expressions resolve safely back into their base linear units or scalar values.
+    /// </para>
+    /// </remarks>
     public static class CompositeReductor
     {
         #region A(B^2) & (A^2)B
@@ -659,23 +780,109 @@ namespace JunX
     #endregion
 
     #region DIVISION OPERANDS
+    /// <summary>
+    /// Represents the base operand abstraction for structured composite unit division expressions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="DivisionOperands"/> implements <see cref="ICompositeUnit"/> to serve as the foundational type 
+    /// for specialized division terms within the composite calculation framework.
+    /// </para>
+    /// <para>
+    /// It acts as the non-generic parent class for operand wrappers such as <see cref="Numerator{TComp}"/> 
+    /// and <see cref="Denominator{TComp}"/>, providing a unified contract for algebraic expression trees and dispatcher pipelines.
+    /// </para>
+    /// </remarks>
     public class DivisionOperands : ICompositeUnit { }
+    /// <summary>
+    /// Represents the numerator component of a composite unit division operation.
+    /// </summary>
+    /// <typeparam name="TComp">The underlying composite unit type occupying the numerator position.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Numerator{TComp}"/> inherits from <see cref="DivisionOperands"/> to wrap and identify the primary 
+    /// dividend term within a composite dimensional division evaluation.
+    /// </para>
+    /// <para>
+    /// It constrains <typeparamref name="TComp"/> to valid <see cref="ICompositeUnit"/> implementations, allowing 
+    /// runtime dispatchers and reduction routines to safely extract and resolve numerator dimensional factors.
+    /// </para>
+    /// </remarks>
     public sealed class Numerator<TComp> : DivisionOperands
         where TComp : class, ICompositeUnit
     { }
+    /// <summary>
+    /// Represents the denominator component of a composite unit division operation.
+    /// </summary>
+    /// <typeparam name="TComp">The underlying composite unit type occupying the denominator position.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Denominator{TComp}"/> inherits from <see cref="DivisionOperands"/> to wrap and identify the primary 
+    /// divisor term within a composite dimensional division evaluation.
+    /// </para>
+    /// <para>
+    /// It constrains <typeparamref name="TComp"/> to valid <see cref="ICompositeUnit"/> implementations, allowing 
+    /// runtime dispatchers and reduction routines to safely extract and invert denominator dimensional factors.
+    /// </para>
+    /// </remarks>
     public sealed class Denominator<TComp> : DivisionOperands
         where TComp : class, ICompositeUnit
     { }
     #endregion
 
+    /// <summary>
+    /// Represents a composite unit structure formed by the dimensional product of two concrete value-type units.
+    /// </summary>
+    /// <typeparam name="Str1">The first underlying struct unit type, representing the primary multiplicand factor.</typeparam>
+    /// <typeparam name="Str2">The second underlying struct unit type, representing the secondary multiplier factor.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="CompositeProduct{Str1, Str2}"/> implements <see cref="ICompositeUnit"/> to encapsulate and evaluate binary 
+    /// multiplicative relationships across concrete dimensional units within the calculation pipeline.
+    /// </para>
+    /// <para>
+    /// It constrains both <typeparamref name="Str1"/> and <typeparamref name="Str2"/> to value types implementing <see cref="IDimensionAccessible"/> 
+    /// and <see cref="INormalizable{TSelf}"/>, ensuring that constituent factors can be queried and normalized during composite reduction operations.
+    /// </para>
+    /// </remarks>
     public class CompositeProduct<Str1, Str2> : ICompositeUnit
         where Str1 : struct, IDimensionAccessible, INormalizable<Str1>
         where Str2 : struct, IDimensionAccessible, INormalizable<Str2> 
     { }
+    /// <summary>
+    /// Represents a composite unit structure formed by the dimensional quotient of two concrete value-type units.
+    /// </summary>
+    /// <typeparam name="Str1">The underlying struct unit type occupying the dividend (numerator) position.</typeparam>
+    /// <typeparam name="Str2">The underlying struct unit type occupying the divisor (denominator) position.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="CompositeQuotient{Str1, Str2}"/> implements <see cref="ICompositeUnit"/> to encapsulate and evaluate binary 
+    /// division relationships across concrete dimensional units within the calculation pipeline.
+    /// </para>
+    /// <para>
+    /// It constrains both <typeparamref name="Str1"/> and <typeparamref name="Str2"/> to value types implementing <see cref="IDimensionAccessible"/> 
+    /// and <see cref="INormalizable{TSelf}"/>, ensuring that ratio components can be queried and normalized during composite reduction operations.
+    /// </para>
+    /// </remarks>
     public class CompositeQuotient<Str1, Str2> : ICompositeUnit
         where Str1 : struct, IDimensionAccessible, INormalizable<Str1>
         where Str2 : struct, IDimensionAccessible, INormalizable<Str2>
     { }
+    /// <summary>
+    /// Represents a higher-order composite unit structure composed of two nested composite unit expressions.
+    /// </summary>
+    /// <typeparam name="TComp1">The first underlying composite unit expression.</typeparam>
+    /// <typeparam name="TComp2">The second underlying composite unit expression.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="BinaryComposite{TComp1, TComp2}"/> implements <see cref="ICompositeUnit"/> to model complex binary trees 
+    /// composed of existing composite unit structures within the dimensional framework.
+    /// </para>
+    /// <para>
+    /// It constrains both <typeparamref name="TComp1"/> and <typeparamref name="TComp2"/> to class types implementing <see cref="ICompositeUnit"/>, 
+    /// allowing runtime dispatchers and expression processors to recursively analyze and flatten deeply nested operational structures.
+    /// </para>
+    /// </remarks>
     public class BinaryComposite<TComp1, TComp2> : ICompositeUnit
         where TComp1 : class, ICompositeUnit
         where TComp2 : class, ICompositeUnit

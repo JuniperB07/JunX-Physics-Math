@@ -1725,6 +1725,47 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a composite, ternary product measurement consisting of three multiplied unit factors 
+    /// (<typeparamref name="Str1"/> × <typeparamref name="Str2"/> × <typeparamref name="Str3"/>), providing scale management, 
+    /// component ordinal tracking, and strongly typed structural encapsulation for 3-factor physical quantities.
+    /// </summary>
+    /// <typeparam name="TComp">
+    /// A marker or backing composite unit interface/class type constraint used to bind or classify the aggregate ternary composite type within the framework architecture.
+    /// </typeparam>
+    /// <typeparam name="Str1">
+    /// The underlying structure type representing the primary unit factor in the ternary product.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En1">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str1"/>.
+    /// </typeparam>
+    /// <typeparam name="Str2">
+    /// The underlying structure type representing the secondary unit factor in the ternary product.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En2">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str2"/>.
+    /// </typeparam>
+    /// <typeparam name="Str3">
+    /// The underlying structure type representing the tertiary unit factor in the ternary product.
+    /// Must be a value type implementing dimension access, scale conversion, normalization, and initialization contracts.
+    /// </typeparam>
+    /// <typeparam name="En3">
+    /// The unit scale enumeration type representing valid scales or prefixes for <typeparamref name="Str3"/>.
+    /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="TernaryProductUnit{TComp, Str1, En1, Str2, En2, Str3, En3}"/> models compound physical quantities formed 
+    /// by multiplying three distinct unit factors (e.g., Mass × Length × Time⁻² for Force when expanded, or Power × Time × Length). 
+    /// It maintains independent scale configurations (<typeparamref name="En1"/>, <typeparamref name="En2"/>, <typeparamref name="En3"/>) 
+    /// and cached ordinal representations for all three factors simultaneously.
+    /// </para>
+    /// <para>
+    /// By implementing <see cref="ICompositeUnit"/>, it integrates into the framework's higher-order dimensional reduction 
+    /// pipeline, allowing multi-factor algebraic operations to maintain strict type safety and zero-allocation performance.
+    /// </para>
+    /// </remarks>
     public struct TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3> :
         IDimensionAccessible,
         IInitializable<TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3>, double>,
@@ -1818,10 +1859,30 @@ namespace JunX
             (Str3 l, ProductUnit<Str1, En1, Str2, En2> r)
             => Multiply(r, l);
         #endregion
-
-        
     }
 
+    /// <summary>
+    /// Represents a composite unit structure expressing a ternary quotient relationship across three distinct dimensional unit types.
+    /// </summary>
+    /// <typeparam name="TComp">The division operand type specifying the structural layout of the quotient terms.</typeparam>
+    /// <typeparam name="Str1">The first constituent struct unit type.</typeparam>
+    /// <typeparam name="En1">The unit scale enumeration type for the first constituent unit.</typeparam>
+    /// <typeparam name="Str2">The second constituent struct unit type.</typeparam>
+    /// <typeparam name="En2">The unit scale enumeration type for the second constituent unit.</typeparam>
+    /// <typeparam name="Str3">The third constituent struct unit type.</typeparam>
+    /// <typeparam name="En3">The unit scale enumeration type for the third constituent unit.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="TernaryQuotientUnit{TComp, Str1, En1, Str2, En2, Str3, En3}"/> implements <see cref="IDimensionAccessible"/>, 
+    /// <see cref="IInitializable{TSelf, TValue}"/>, and <see cref="ICompositeUnit"/> to represent multi-factor ratio expressions 
+    /// within the composite calculation framework.
+    /// </para>
+    /// <para>
+    /// It enforces rigorous constraint contracts on its constituent unit types—requiring them to support dimensional accessibility, 
+    /// scale conversion, normalization, and value extraction—allowing runtime dispatchers and reduction routines to evaluate and transmute 
+    /// complex three-factor quotient magnitudes safely.
+    /// </para>
+    /// </remarks>
     public struct TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> :
         IDimensionAccessible,
         IInitializable<TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3>, double>,
@@ -1925,6 +1986,30 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a composite unit structure expressing a quaternary product relationship across four distinct dimensional unit types.
+    /// </summary>
+    /// <typeparam name="TComp">The composite unit type specifying the underlying structural composition of the product expression.</typeparam>
+    /// <typeparam name="Str1">The first constituent struct unit type.</typeparam>
+    /// <typeparam name="En1">The unit scale enumeration type for the first constituent unit.</typeparam>
+    /// <typeparam name="Str2">The second constituent struct unit type.</typeparam>
+    /// <typeparam name="En2">The unit scale enumeration type for the second constituent unit.</typeparam>
+    /// <typeparam name="Str3">The third constituent struct unit type.</typeparam>
+    /// <typeparam name="En3">The unit scale enumeration type for the third constituent unit.</typeparam>
+    /// <typeparam name="Str4">The fourth constituent struct unit type.</typeparam>
+    /// <typeparam name="En4">The unit scale enumeration type for the fourth constituent unit.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="QuaternaryProductUnit{TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4}"/> implements <see cref="IDimensionAccessible"/>, 
+    /// <see cref="IInitializable{TSelf, TValue}"/>, and <see cref="ICompositeUnit"/> to represent four-factor multiplicative expressions 
+    /// within the composite calculation framework.
+    /// </para>
+    /// <para>
+    /// It enforces rigorous constraint contracts on its constituent unit types—requiring them to support dimensional accessibility, 
+    /// scale conversion, normalization, and value extraction—allowing runtime dispatchers and reduction routines to evaluate and transmute 
+    /// complex four-factor product magnitudes safely.
+    /// </para>
+    /// </remarks>
     public struct QuaternaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4> :
         IDimensionAccessible,
         IInitializable<QuaternaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4>, double>,
@@ -2024,6 +2109,30 @@ namespace JunX
         #endregion
     }
 
+    /// <summary>
+    /// Represents a composite unit structure expressing a quaternary quotient relationship across four distinct dimensional unit types.
+    /// </summary>
+    /// <typeparam name="TComp">The division operand type specifying the structural layout of the quotient terms.</typeparam>
+    /// <typeparam name="Str1">The first constituent struct unit type.</typeparam>
+    /// <typeparam name="En1">The unit scale enumeration type for the first constituent unit.</typeparam>
+    /// <typeparam name="Str2">The second constituent struct unit type.</typeparam>
+    /// <typeparam name="En2">The unit scale enumeration type for the second constituent unit.</typeparam>
+    /// <typeparam name="Str3">The third constituent struct unit type.</typeparam>
+    /// <typeparam name="En3">The unit scale enumeration type for the third constituent unit.</typeparam>
+    /// <typeparam name="Str4">The fourth constituent struct unit type.</typeparam>
+    /// <typeparam name="En4">The unit scale enumeration type for the fourth constituent unit.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="QuaternaryQuotientUnit{TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4}"/> implements <see cref="IDimensionAccessible"/>, 
+    /// <see cref="IInitializable{TSelf, TValue}"/>, and <see cref="ICompositeUnit"/> to represent multi-factor ratio expressions 
+    /// within the composite calculation framework.
+    /// </para>
+    /// <para>
+    /// It enforces rigorous constraint contracts on its constituent unit types—requiring them to support dimensional accessibility, 
+    /// scale conversion, normalization, and value extraction—allowing runtime dispatchers and reduction routines to evaluate and transmute 
+    /// complex four-factor quotient magnitudes safely.
+    /// </para>
+    /// </remarks>
     public struct QuaternaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4> :
         IDimensionAccessible,
         IInitializable<QuaternaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4>, double>,
