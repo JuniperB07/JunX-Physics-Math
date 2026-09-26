@@ -34,4 +34,33 @@ namespace JunX.Mathematics.Geometry
         Megaparsec,
         Gigaparsec
     }
+
+    public enum AreaUnits
+    {
+        SquareAttometer,
+        SquareFemtometer,
+        Barn,
+        SquarePicometer,
+        SquareNanometer,
+        SquareMicrometer,
+        SquareMillimeter,
+        SquareCentimeter,
+        SquareMeter,
+        Are,
+        Decare,
+        Hectare,
+        SquareKilometer,
+        CircularMil,
+        SquareInch,
+        SquareFoot,
+        SquareYard,
+        SquareAcre,
+        SquareMile,
+        SquarePlanckArea,
+        SquareLightSecond,
+        SquareAstronomicalUnit,
+        SquareLightYear,
+        SquareParsec
+    }
+
 }

@@ -115,7 +115,7 @@ namespace JunX.Mathematics.Geometry
 
         public Length Duplicate() => new(this);
         public bool Equals(Length l) => Normalized.Magnitude == l.Normalized.Magnitude;
-        public bool IsValid() => Original.Scale >= 0;
+        public bool IsValid() => Original.Magnitude >= 0;
         #endregion
 
         #region OVERRIDES
@@ -157,6 +157,119 @@ namespace JunX.Mathematics.Geometry
         #region CROSS-DIMENSIONAL OPERATORS
         public static double operator /(Length l, Length r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct Area :
+        IInitializable<Area>, IInitializable<Area, double>, IInitializable<Area, double, AreaUnits>,
+        IScaleMappable<AreaUnits>, IScaleConvertible<Area, AreaUnits>,
+        INormalized<AreaUnits>, INormalizable<Area>,
+        IDimensionAccessible,
+        IValueAccessible<AreaUnits>,
+        IDuplicatable<Area>,
+        IEquatable<Area>,
+        IValidatable,
+        ILinearUnit<Area, AreaUnits>
+    {
+        private readonly double _m2;
+
+        #region PROPERTIES
+        public int Dimension => 2;
+        public static Dictionary<AreaUnits, double> Mapper => new()
+        {
+            { AreaUnits.SquarePlanckArea, 2.61223e-70 },      // ℓₚ² = ħG / c³ (~2.612 × 10⁻⁷⁰ m²)
+            { AreaUnits.SquareAttometer, 1e-36 },              // am²
+            { AreaUnits.SquareFemtometer, 1e-30 },             // fm²
+            { AreaUnits.Barn, 1e-28 },                         // b (100 fm², standard nuclear cross-section unit)
+            { AreaUnits.SquarePicometer, 1e-24 },              // pm²
+            { AreaUnits.SquareNanometer, 1e-18 },              // nm²
+            { AreaUnits.SquareMicrometer, 1e-12 },             // µm²
+
+            { AreaUnits.SquareMillimeter, 1e-6 },              // mm²
+            { AreaUnits.SquareCentimeter, 1e-4 },              // cm²
+            { AreaUnits.SquareMeter, 1.0 },                    // m² (SI Base Unit)
+            { AreaUnits.Are, 100.0 },                          // a (100 m²)
+            { AreaUnits.Decare, 1000.0 },                      // daa (1,000 m² / 10 ares)
+            { AreaUnits.Hectare, 10000.0 },                    // ha (10,000 m² / 100 ares)
+            { AreaUnits.SquareKilometer, 1e6 },                // km²
+
+            { AreaUnits.CircularMil, 5.06707479097497e-10 },   // cmil (area of circle with d = 1 mil / 0.001 in)
+            { AreaUnits.SquareInch, 0.00064516 },              // in² (exact: 0.0254 m)²
+            { AreaUnits.SquareFoot, 0.09290304 },              // ft² (exact: 0.3048 m)²
+            { AreaUnits.SquareYard, 0.83612736 },              // yd² (exact: 0.9144 m)²
+            { AreaUnits.SquareAcre, 4046.8564224 },            // ac (exact: 4,840 yd²)
+            { AreaUnits.SquareMile, 2589988.110336 },          // mi² (exact: 1,760 yd)²
+
+            { AreaUnits.SquareLightSecond, 8.98755178736817e16 }, // (299,792,458 m)²
+            { AreaUnits.SquareAstronomicalUnit, 2.237952291797e22 }, // AU² (149,597,870,700 m)²
+            { AreaUnits.SquareLightYear, 8.9505431526364e31 },    // ly² (~9.4607 × 10¹⁵ m)²
+            { AreaUnits.SquareParsec, 9.521406180373e32 }         // pc² (~3.0857 × 10¹⁶ m)²
+        };
+
+        public static AreaUnits BaseScale => AreaUnits.SquareMeter;
+        public (double Magnitude, AreaUnits Scale, int ScaleOrdinal) Normalized => (_m2, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, AreaUnits Scale, int ScaleOrdinal) Original { get; private set; }
+        public (double Magnitude, AreaUnits Scale, int ScaleOrdinal) Converted { get; private set; }
+        #endregion
+
+        #region CONSTRUCTORS
+        public Area()
+        {
+            Original = (0, BaseScale, (int)BaseScale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _m2 = 0;
+        }
+        public Area(Area instance)
+        {
+            this = instance;
+        }
+        public Area(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _m2 = magnitude;
+        }
+        public Area(double magnitude, AreaUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _m2 = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Area Initialize() => new();
+        public static Area Create(Area instance) => new(instance);
+        public static Area Create(double magnitude) => new(magnitude);
+        public static Area Create(double magnitude, AreaUnits scale) => new(magnitude, scale);
+
+        public Area Normalize()
+        {
+            if (Original.Scale == BaseScale)
+                return this;
+
+            Original = (Normalized.Magnitude, Normalized.Scale, Normalized.ScaleOrdinal);
+            return this;
+        }
+
+        public Area Convert(AreaUnits toScale)
+        {
+            if(toScale == Original.Scale)
+            {
+                Converted = (Original.Magnitude, Original.Scale, Original.ScaleOrdinal);
+                return this;
+            }
+
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(AreaUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+
+        public Area Duplicate() => new(this);
+        public bool Equals(Area other) => Normalized.Magnitude == other.Normalized.Magnitude;
+        public bool IsValid() => Original.Magnitude >= 0;
         #endregion
     }
 }
