@@ -63,4 +63,43 @@ namespace JunX.Mathematics.Geometry
         SquareParsec
     }
 
+    public enum VolumeUnits
+    {
+        CubicMillimeter,
+        CubicCentimeter,
+        Milliliter,
+        Liter,
+        CubicMeter,
+        CubicKilometer,
+        Minim,
+        FluidDram,
+        Teaspoon,
+        Tablespoon,
+        FluidOunce,
+        Shot,
+        Gill,
+        Cup,
+        Pint,
+        Quart,
+        Gallon,
+        DryPint,
+        DryQuart,
+        Peck,
+        Bushel,
+        CubicInch,
+        CubicFoot,
+        CubicYard,
+        Drop,
+        PlanckVolume,
+        CubicLightSecond,
+        CubicAstronomicalUnit,
+        CubicLightYear,
+        CubicParsec
+    }
+
+    public enum AngleUnits
+    {
+        Radians,
+        Degree
+    }
 }

@@ -52,7 +52,11 @@ namespace JunX
         public const string INVALID_DIMENSION_CASTING = "Unable to cast current instance into the desired dimension.";
         public const string TYPE_PARAMETER_MISMATCH = "Unable to compare instances with different type parameters.";
         public const string COMPOSITE_UNIT_SCALE_MISMATCH = "Cannot operate on composite unit instances with different scale values.";
+        public const string DIMENSIONAL_CONVERSION = "Unable to convert to the desired unit. Please check the dimensionality of each element.";
+        public const string ARRAY_LENGTH_MISMATCH = "Length of both arrays must be the same size.";
 
+        public static string Insufficient_Array_Length(int minimumLength)
+            => $"Array length must not be less than {minimumLength}.";
     }
 
     /// <summary>

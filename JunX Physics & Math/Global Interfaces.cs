@@ -292,4 +292,8 @@ namespace JunX
         where TEnum : Enum
     { }
     #endregion
+
+    #region DIMENSIONAL UNIT
+    public interface IDimensionalUnit { }
+    #endregion
 }

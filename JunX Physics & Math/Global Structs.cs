@@ -47,7 +47,8 @@ namespace JunX
         IValueAccessible<En>,
         ISquareRootable<Str>,
         IEquatable<UnitSquared<Str, En>>,
-        IExponentiable<HyperUnit<Str, En>>
+        IExponentiable<HyperUnit<Str, En>>,
+        IDimensionalUnit
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -468,7 +469,8 @@ namespace JunX
         IValueAccessible<En>,
         ICubeRootable<Str>,
         IEquatable<UnitCubed<Str, En>>,
-        IExponentiable<HyperUnit<Str, En>>
+        IExponentiable<HyperUnit<Str, En>>,
+        IDimensionalUnit
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -659,7 +661,8 @@ namespace JunX
         ISquareRootable<HyperUnit<Str, En>>,
         ICubeRootable<HyperUnit<Str, En>>,
         IRootable<HyperUnit<Str, En>>,
-        IExponentiable<HyperUnit<Str, En>>
+        IExponentiable<HyperUnit<Str, En>>,
+        IDimensionalUnit
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -841,6 +844,7 @@ namespace JunX
         #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
         public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, Str r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + 1);
+        public static HyperUnit<Str, En> operator *(Str l, HyperUnit<Str, En> r) => r * l;
         public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, UnitSquared<Str, En> r)
             => new HyperUnit<Str, En>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetDimension(l.Dimension + r.Dimension);
         public static HyperUnit<Str, En> operator *(HyperUnit<Str, En> l, UnitCubed<Str, En> r)
