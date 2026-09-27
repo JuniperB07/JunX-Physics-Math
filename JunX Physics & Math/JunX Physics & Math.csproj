@@ -17,10 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference 
-      Include="..\Distinct Enum Type Analyzer\Distinct Enum Type Analyzer.csproj"
-      OutputItemType ="Analyzer"
-      ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\Distinct Enum Type Analyzer\Distinct Enum Type Analyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
