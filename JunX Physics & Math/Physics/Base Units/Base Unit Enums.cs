@@ -63,4 +63,21 @@ namespace JunX.Physics.BaseUnits
         JupiterMass,
         SolarMass
     }
+
+    public enum CurrentUnits
+    {
+        Ampere,
+        Attoampere,
+        Femtoampere,
+        Picoampere,
+        Nanoampere,
+        Microampere,
+        Milliampere,
+        Kiloampere,
+        Megaampere,
+        Gigaampere,
+        Biot,
+        Abampere,
+        Statampere
+    }
 }

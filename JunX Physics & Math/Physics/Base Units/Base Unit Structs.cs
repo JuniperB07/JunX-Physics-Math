@@ -9,6 +9,20 @@ using System.Text;
 
 namespace JunX.Physics.BaseUnits
 {
+    /// <summary>
+    /// Represents a one-dimensional temporal unit structure supporting scale conversions, normalization, temporal arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Time"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage temporal durations spanning quantum, subatomic, civil, astronomical, and cosmological scales.
+    /// </para>
+    /// <para>
+    /// It maintains a temporal dimension of 1 and normalizes values relative to the SI base unit (<see cref="TimeUnits.Second"/>). 
+    /// The structure facilitates scale conversions across diverse time units (ranging from Planck time to galactic years and eons), 
+    /// equality and relational comparisons, linear arithmetic operations, and dimensional scaling into higher-order temporal constructs (<see cref="UnitSquared{TUnit, TEnum}"/>, <see cref="UnitCubed{TUnit, TEnum}"/>, and <see cref="HyperUnit{TUnit, TEnum}"/>).
+    /// </para>
+    /// </remarks>
     public struct Time :
         IInitializable<Time>, IInitializable<Time, double>, IInitializable<Time, double, TimeUnits>,
         IScaleMappable<TimeUnits>, IScaleConvertible<Time, TimeUnits>,
@@ -152,6 +166,21 @@ namespace JunX.Physics.BaseUnits
         #endregion
     }
 
+    /// <summary>
+    /// Represents a one-dimensional mass unit structure supporting scale conversions, normalization, validation, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Mass"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IValidatable"/>, and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage mass quantities across quantum/subatomic ($eV/c^2$, Da), 
+    /// avoirdupois/apothecary, metric, and astronomical/cosmological scales ($M_{\odot}$, $M_{\oplus}$).
+    /// </para>
+    /// <para>
+    /// It maintains a mass dimension of 1 and normalizes values relative to the SI base unit (<see cref="MassUnits.Kilogram"/>). 
+    /// The structure provides scale conversion pipelines, non-negativity validation via <see cref="IsValid"/>, relational comparisons, linear arithmetic operations, 
+    /// and dimensional exponentiation into higher-order mass structures (<see cref="UnitSquared{TUnit, TEnum}"/>, <see cref="UnitCubed{TUnit, TEnum}"/>, and <see cref="HyperUnit{TUnit, TEnum}"/>).
+    /// </para>
+    /// </remarks>
     public struct Mass :
         IInitializable<Mass>, IInitializable<Mass, double>, IInitializable<Mass, double, MassUnits>,
         IScaleMappable<MassUnits>, IScaleConvertible<Mass, MassUnits>,
@@ -164,7 +193,7 @@ namespace JunX.Physics.BaseUnits
         IExponentiable<UnitSquared<Mass, MassUnits>, UnitCubed<Mass, MassUnits>, HyperUnit<Mass, MassUnits>>,
         ILinearUnit<Mass, MassUnits>
     {
-        public readonly double _kg;
+        private readonly double _kg;
 
         #region PROPERTIES
         public int Dimension => 1;
@@ -256,6 +285,11 @@ namespace JunX.Physics.BaseUnits
             return this;
         }
 
+        public UnitSquared<Mass, MassUnits> Squared() => this * this;
+        public UnitCubed<Mass, MassUnits> Cubed() => this * this * this;
+        public HyperUnit<Mass, MassUnits> Pow(int exp)
+            => new HyperUnit<Mass, MassUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
+
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -273,6 +307,51 @@ namespace JunX.Physics.BaseUnits
         public static bool operator >(Mass l, Mass r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
         public static bool operator <=(Mass l, Mass r) => l < r || l == r;
         public static bool operator >=(Mass l, Mass r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Mass operator +(Mass l, Mass r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Mass operator -(Mass l, Mass r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Mass operator *(Mass l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Mass operator *(double l, Mass r) => r * l;
+        public static Mass operator /(Mass l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Mass, MassUnits> operator *(Mass l, Mass r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static double operator /(Mass l, Mass r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct Current :
+        IInitializable<Current>, IInitializable<Current, double>, IInitializable<Current, double, CurrentUnits>,
+        IScaleMappable<CurrentUnits>, IScaleConvertible<Current, CurrentUnits>,
+        INormalized<CurrentUnits>, INormalizable<Current>,
+        IDimensionAccessible,
+        IValueAccessible<CurrentUnits>,
+        IDuplicatable<Current>,
+        IEquatable<Current>,
+        IExponentiable<UnitSquared<Current, CurrentUnits>, UnitCubed<Current, CurrentUnits>, HyperUnit<Current, CurrentUnits>>,
+        ILinearUnit<Current, CurrentUnits>
+    {
+        private readonly double _A;
+
+        #region PROPERTIES
+
+        #endregion
+
+        #region CONSTRUCTORS
+
+        #endregion
+
+        #region METHODS
+
         #endregion
     }
 }
