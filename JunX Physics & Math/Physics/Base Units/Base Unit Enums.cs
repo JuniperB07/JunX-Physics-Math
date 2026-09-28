@@ -31,4 +31,36 @@ namespace JunX.Physics.BaseUnits
         GalacticYear,
         Eon
     }
+
+    public enum MassUnits
+    {
+        PlanckMass,
+        Dalton,
+        ElectronvoltEquivalent,
+        MegaelectronvoltEquivalent,
+        GigaelectronvoltEquivalent,
+        Microgram,
+        Milligram,
+        Gram,
+        Carat,
+        Kilogram,
+        MetricTon,
+        Kiloton,
+        Megaton,
+        Gigaton,
+        Grain,
+        Dram,
+        Ounce,
+        Pound,
+        Slug,
+        Stone,
+        Pennyweight,
+        ApothecariesScruple,
+        ApothecariesDram,
+        ApothecariesOunce,
+        ApothecariesPound,
+        EarthMass,
+        JupiterMass,
+        SolarMass
+    }
 }

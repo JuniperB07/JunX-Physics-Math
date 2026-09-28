@@ -1,8 +1,10 @@
 ﻿using JunX.Mathematics.Geometry;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.Marshalling;
+using System.Security.Principal;
 using System.Text;
 
 namespace JunX.Physics.BaseUnits
@@ -15,6 +17,7 @@ namespace JunX.Physics.BaseUnits
         IValueAccessible<TimeUnits>,
         IDuplicatable<Time>,
         IEquatable<Time>,
+        IExponentiable<UnitSquared<Time, TimeUnits>, UnitCubed<Time, TimeUnits>, HyperUnit<Time, TimeUnits>>,
         ILinearUnit<Time, TimeUnits>
     {
         private readonly double _s;
@@ -105,6 +108,11 @@ namespace JunX.Physics.BaseUnits
             return this;
         }
 
+        public UnitSquared<Time, TimeUnits> Squared() => this * this;
+        public UnitCubed<Time, TimeUnits> Cubed() => this * this * this;
+        public HyperUnit<Time, TimeUnits> Pow(int exp)
+            => new HyperUnit<Time, TimeUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(Dimension * exp);
+
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -113,6 +121,158 @@ namespace JunX.Physics.BaseUnits
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Time l, Time r) => l.Equals(r);
+        public static bool operator !=(Time l, Time r) => !(l == r);
+        public static bool operator <(Time l, Time r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Time l, Time r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Time l, Time r) => l < r || l == r;
+        public static bool operator >=(Time l, Time r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Time operator +(Time l, Time r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Time operator -(Time l, Time r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Time operator *(Time l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Time operator *(double l, Time r) => r * l;
+        public static Time operator /(Time l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Time, TimeUnits> operator *(Time l, Time r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Time l, Time r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct Mass :
+        IInitializable<Mass>, IInitializable<Mass, double>, IInitializable<Mass, double, MassUnits>,
+        IScaleMappable<MassUnits>, IScaleConvertible<Mass, MassUnits>,
+        INormalized<MassUnits>, INormalizable<Mass>,
+        IDimensionAccessible,
+        IValueAccessible<MassUnits>,
+        IDuplicatable<Mass>,
+        IEquatable<Mass>,
+        IValidatable,
+        IExponentiable<UnitSquared<Mass, MassUnits>, UnitCubed<Mass, MassUnits>, HyperUnit<Mass, MassUnits>>,
+        ILinearUnit<Mass, MassUnits>
+    {
+        public readonly double _kg;
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<MassUnits, double> Mapper => new()
+        {
+            { MassUnits.PlanckMass, 2.176434e-8 },                    // mₚ = √(ħc/G) (~2.176434 × 10⁻⁸ kg)
+            { MassUnits.Dalton, 1.66053906660e-27 },                  // Da / u (unified atomic mass unit, exact per CODATA)
+            { MassUnits.ElectronvoltEquivalent, 1.78266192162790e-36 },// eV/c²
+            { MassUnits.MegaelectronvoltEquivalent, 1.78266192162790e-30 }, // MeV/c²
+            { MassUnits.GigaelectronvoltEquivalent, 1.78266192162790e-27 },
+
+            { MassUnits.Microgram, 1e-9 },                             // µg
+            { MassUnits.Milligram, 1e-6 },                             // mg
+            { MassUnits.Gram, 1e-3 },                                  // g
+            { MassUnits.Carat, 2e-4 },                                 // CD (0.2 g, exact)
+            { MassUnits.Kilogram, 1.0 },                               // kg (SI Base Unit)
+            { MassUnits.MetricTon, 1e3 },                              // t (1,000 kg)
+            { MassUnits.Kiloton, 1e6 },                                // kt
+            { MassUnits.Megaton, 1e9 },                                // Mt
+            { MassUnits.Gigaton, 1e12 },
+
+            { MassUnits.Grain, 6.479891e-5 },                          // gr (exact: 64.79891 mg)
+            { MassUnits.Dram, 1.7718451953125e-3 },                    // dr (16 drams = 1 oz)
+            { MassUnits.Ounce, 0.028349523125 },                       // oz (exact international avoirdupois)
+            { MassUnits.Pound, 0.45359237 },                           // lb (exact international avoirdupois)
+            { MassUnits.Slug, 14.5939029372 },                         // slug (1 lbf·s²/ft)
+            { MassUnits.Stone, 6.35029318 },                           // st (14 lb)
+            { MassUnits.Pennyweight, 1.55517384e-3 },
+
+            { MassUnits.ApothecariesScruple, 1.2959782e-3 },           // ℈ (20 grains)
+            { MassUnits.ApothecariesDram, 3.8879346e-3 },              // ʒ (60 grains / 3 scruples)
+            { MassUnits.ApothecariesOunce, 0.0311034768 },             // ℥ / troy oz (480 grains / 8 drams)
+            { MassUnits.ApothecariesPound, 0.3732417216 },
+
+            { MassUnits.EarthMass, 5.972168e24 },                      // M⊕ (IAU 2015 nominal)
+            { MassUnits.JupiterMass, 1.8981246e27 },                   // Mⱼ (IAU 2015 nominal)
+            { MassUnits.SolarMass, 1.988416e30 }
+        };
+
+        public static MassUnits BaseScale => MassUnits.Kilogram;
+        public (double Magnitude, MassUnits Scale, int ScaleOrdinal) Normalized => (_kg, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, MassUnits Scale, int ScaleOrdinal) Original { get; private set; }
+        public (double Magnitude, MassUnits Scale, int ScaleOrdinal) Converted { get; private set; }
+        #endregion
+
+        #region CONSTRUCTORS
+        public Mass()
+        {
+            Original = (0, BaseScale, (int)BaseScale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _kg = 0;
+        }
+        public Mass(Mass instance) => this = instance;
+        public Mass(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _kg = magnitude;
+        }
+        public Mass(double magnitude, MassUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            Converted = (0, BaseScale, (int)BaseScale);
+            _kg = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Mass Initialize() => new();
+        public static Mass Create(Mass instance) => new(instance);
+        public static Mass Create(double magnitude) => new(magnitude);
+        public static Mass Create(double magnitude, MassUnits scale) => new(magnitude, scale);
+
+        public Mass Duplicate() => new(this);
+        public bool Equals(Mass other) => Normalized.Magnitude == other.Normalized.Magnitude;
+        public bool IsValid() => Original.Magnitude >= 0;
+
+        public Mass Convert(MassUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(MassUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Mass Normalize()
+        {
+            Original = (Normalized.Magnitude, Normalized.Scale, Normalized.ScaleOrdinal);
+            return this;
+        }
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Mass l, Mass r) => l.Equals(r);
+        public static bool operator !=(Mass l, Mass r) => !(l == r);
+        public static bool operator <(Mass l, Mass r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Mass l, Mass r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Mass l, Mass r) => l < r || l == r;
+        public static bool operator >=(Mass l, Mass r) => l > r || l == r;
         #endregion
     }
 }
