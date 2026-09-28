@@ -329,6 +329,20 @@ namespace JunX.Physics.BaseUnits
         #endregion
     }
 
+    /// <summary>
+    /// Represents a one-dimensional electric current unit structure supporting scale conversions, normalization, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Current"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage electric current quantities across subatomic, microelectronic, industrial, and electromagnetic system scales (e.g., abampere, statampere, biot).
+    /// </para>
+    /// <para>
+    /// It maintains an electrical dimension of 1 and normalizes values relative to the SI base unit (<see cref="CurrentUnits.Ampere"/>). 
+    /// The structure provides unit conversion pipelines across standard SI prefixes and CGS/EMU/ESU units, relational evaluation, linear arithmetic operations, 
+    /// and dimensional scaling into higher-order current structures (<see cref="UnitSquared{TUnit, TEnum}"/>, <see cref="UnitCubed{TUnit, TEnum}"/>, and <see cref="HyperUnit{TUnit, TEnum}"/>).
+    /// </para>
+    /// </remarks>
     public struct Current :
         IInitializable<Current>, IInitializable<Current, double>, IInitializable<Current, double, CurrentUnits>,
         IScaleMappable<CurrentUnits>, IScaleConvertible<Current, CurrentUnits>,
@@ -343,15 +357,250 @@ namespace JunX.Physics.BaseUnits
         private readonly double _A;
 
         #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<CurrentUnits, double> Mapper => new()
+        {
+            { CurrentUnits.Ampere, 1.0 },
 
+            { CurrentUnits.Milliampere, 1e-3 },
+            { CurrentUnits.Microampere, 1e-6 },
+            { CurrentUnits.Nanoampere, 1e-9 },
+            { CurrentUnits.Picoampere, 1e-12 },
+            { CurrentUnits.Femtoampere, 1e-15 },
+            { CurrentUnits.Attoampere, 1e-18 },
+            { CurrentUnits.Kiloampere, 1e3 },
+            { CurrentUnits.Megaampere, 1e6 },
+            { CurrentUnits.Gigaampere, 1e9 },
+
+            { CurrentUnits.Biot, 10.0 },         // 1 Bi = 10 A
+            { CurrentUnits.Abampere, 10.0 },     // 1 abA = 10 A (equivalent to Biot in EMU)
+            { CurrentUnits.Statampere, 3.33564e-10 }
+        };
+
+        public static CurrentUnits BaseScale => CurrentUnits.Ampere;
+        public (double Magnitude, CurrentUnits Scale, int ScaleOrdinal) Normalized => (_A, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, CurrentUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, CurrentUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
         #endregion
 
         #region CONSTRUCTORS
-
+        public Current()
+        {
+            _A = 0;
+        }
+        public Current(Current instance) => this = instance;
+        public Current(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _A = magnitude;
+        }
+        public Current(double magnitude, CurrentUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _A = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
         #endregion
 
         #region METHODS
+        public static Current Initialize() => new();
+        public static Current Create(Current instance) => new(instance);
+        public static Current Create(double magnitude) => new(magnitude);
+        public static Current Create(double magnitude, CurrentUnits scale) => new(magnitude, scale);
 
+        public Current Duplicate() => new(this);
+        public bool Equals(Current other) => Normalized.Magnitude == other.Normalized.Magnitude;
+        
+        public Current Convert(CurrentUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(CurrentUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Current Normalize()
+        {
+            Original = (Normalized.Magnitude, Normalized.Scale, Normalized.ScaleOrdinal);
+            return this;
+        }
+
+        public UnitSquared<Current, CurrentUnits> Squared() => this * this;
+        public UnitCubed<Current, CurrentUnits> Cubed() => this * this * this;
+        public HyperUnit<Current, CurrentUnits> Pow(int exp)
+            => new HyperUnit<Current, CurrentUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Current l, Current r) => l.Equals(r);
+        public static bool operator !=(Current l, Current r) => !(l == r);
+        public static bool operator <(Current l, Current r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Current l, Current r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Current l, Current r) => l < r || l == r;
+        public static bool operator >=(Current l, Current r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Current operator +(Current l, Current r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Current operator -(Current l, Current r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Current operator *(Current l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Current operator *(double l, Current r) => r * l;
+        public static Current operator /(Current l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS DIMENSIONAL OPERATORS
+        public static UnitSquared<Current, CurrentUnits> operator *(Current l, Current r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Current l, Current r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    /// <summary>
+    /// Represents a one-dimensional thermodynamic temperature unit structure supporting affine scale conversions, normalization, non-negativity validation, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Temperature"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IValidatable"/>, and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage absolute and relative temperature quantities across scientific and empirical scales (<see cref="TemperatureUnits.Kelvin"/>, <see cref="TemperatureUnits.Celsius"/>, and <see cref="TemperatureUnits.Fahrenheit"/>).
+    /// </para>
+    /// <para>
+    /// It maintains a thermodynamic dimension of 1 and normalizes values relative to the SI base unit (<see cref="TemperatureUnits.Kelvin"/>). 
+    /// Unlike purely multiplicative physical units, the structure handles affine offset transformations for Celsius and Fahrenheit scales during conversion and instantiation. 
+    /// It also enforces absolute zero physical validity via <see cref="IsValid"/>, and provides relational comparison, linear arithmetic, and dimensional exponentiation into higher-order temperature structures (<see cref="UnitSquared{TUnit, TEnum}"/>, <see cref="UnitCubed{TUnit, TEnum}"/>, and <see cref="HyperUnit{TUnit, TEnum}"/>).
+    /// </para>
+    /// </remarks>
+    public struct Temperature :
+        IInitializable<Temperature>, IInitializable<Temperature, double>, IInitializable<Temperature, double, TemperatureUnits>,
+        //IScaleMappable<CurrentUnits>, 
+        IScaleConvertible<Temperature, TemperatureUnits>,
+        INormalized<TemperatureUnits>, INormalizable<Temperature>,
+        IDimensionAccessible,
+        IValueAccessible<TemperatureUnits>,
+        IDuplicatable<Temperature>,
+        IEquatable<Temperature>,
+        IValidatable,
+        IExponentiable<UnitSquared<Temperature, TemperatureUnits>, UnitCubed<Temperature, TemperatureUnits>, HyperUnit<Temperature, TemperatureUnits>>,
+        ILinearUnit<Temperature, TemperatureUnits>
+    {
+        private readonly double _K;
+
+        #region PROPERTIES
+        public int Dimension => 1;
+
+        public static TemperatureUnits BaseScale => TemperatureUnits.Kelvin;
+        public (double Magnitude, TemperatureUnits Scale, int ScaleOrdinal) Normalized => (_K, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, TemperatureUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, TemperatureUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Temperature() => _K = 0;
+        public Temperature(Temperature instance) => this = instance;
+        public Temperature(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _K = magnitude;
+        }
+        public Temperature(double magnitude, TemperatureUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+
+            if (scale == TemperatureUnits.Celsius)
+                _K = magnitude + 273.15;
+            else if (scale == TemperatureUnits.Fahrenheit)
+                _K = (magnitude - 32.0) * (5.0 / 9.0) + 273.15;
+            else
+                _K = magnitude;
+        }
+        #endregion
+
+        #region METHODS
+        public static Temperature Initialize() => new();
+        public static Temperature Create(Temperature instance) => new(instance);
+        public static Temperature Create(double magnitude) => new(magnitude);
+        public static Temperature Create(double magnitude, TemperatureUnits scale) => new(magnitude, scale);
+
+        public Temperature Duplicate() => new(this);
+        public bool Equals(Temperature other) => Normalized.Magnitude == other.Normalized.Magnitude;
+        public bool IsValid() => Normalized.Magnitude >= 0;
+
+        public Temperature Convert(TemperatureUnits toScale)
+        {
+            double mag;
+
+            if (toScale == TemperatureUnits.Fahrenheit)
+                mag = (_K - 273.15) * (9.0 / 5.0) + 32;
+            else if (toScale == TemperatureUnits.Celsius)
+                mag = _K - 273.15;
+            else
+                mag = _K;
+
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(TemperatureUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Temperature Normalize()
+        {
+            Original = (_K, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Temperature, TemperatureUnits> Squared() => this * this;
+        public UnitCubed<Temperature, TemperatureUnits> Cubed() => this * this * this;
+        public HyperUnit<Temperature, TemperatureUnits> Pow(int exp)
+            => new HyperUnit<Temperature, TemperatureUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Temperature l, Temperature r) => l.Equals(r);
+        public static bool operator !=(Temperature l, Temperature r) => !l.Equals(r);
+        public static bool operator <(Temperature l, Temperature r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Temperature l, Temperature r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Temperature l, Temperature r) => l < r || l == r;
+        public static bool operator >=(Temperature l, Temperature r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATOR
+        public static Temperature operator +(Temperature l, Temperature r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Temperature operator -(Temperature l, Temperature r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Temperature operator *(Temperature l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Temperature operator *(double l, Temperature r) => r * l;
+        public static Temperature operator /(Temperature l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS DIMENSIONAL ARITHMETIC OPERATOR 
+        public static UnitSquared<Temperature, TemperatureUnits> operator *(Temperature l, Temperature r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Temperature l, Temperature r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
 }

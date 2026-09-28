@@ -80,4 +80,12 @@ namespace JunX.Physics.BaseUnits
         Abampere,
         Statampere
     }
+
+    public enum TemperatureUnits
+    {
+        Kelvin,
+        Celsius,
+        Fahrenheit
+    }
+
 }
