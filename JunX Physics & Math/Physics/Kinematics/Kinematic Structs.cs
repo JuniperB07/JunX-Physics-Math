@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Numerics;
 
 namespace JunX.Physics.Kinematics
 {
@@ -311,8 +312,6 @@ namespace JunX.Physics.Kinematics
         public static Acceleration Average(Velocity deltaV, Time deltaT) => deltaV / deltaT;
         public static Acceleration Average((Velocity Initial, Velocity Final) v, (Time Initial, Time Final) t)
             => Average(Velocity.Delta(v.Initial, v.Final), Time.DeltaT(t.Initial, t.Final));
-
-
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -350,6 +349,115 @@ namespace JunX.Physics.Kinematics
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         public static Length operator *(UnitSquared<Time, TimeUnits> l, Acceleration r) => r * l;
         public static UnitSquared<Velocity, VelocityUnits> operator *(Acceleration l, Length r) => r * l;
+        #endregion
+    }
+
+    public struct AngularVelocity :
+        IInitializable<AngularVelocity>, IInitializable<AngularVelocity, double>, IInitializable<AngularVelocity, double, AngularVelocityUnits>,
+        IScaleConvertible<AngularVelocity, AngularVelocityUnits>,
+        INormalized<AngularVelocityUnits>, INormalizable<AngularVelocity>,
+        IDimensionAccessible,
+        IValueAccessible<AngularVelocityUnits>,
+        IDuplicatable<AngularVelocity>,
+        IEquatable<AngularVelocity>,
+        IValidatable,
+        IBinaryCompositeTransposable<AngularVelocity, QuotientUnit<Angle, AngleUnits, Time, TimeUnits>>,
+        IExponentiable<UnitSquared<AngularVelocity, AngularVelocityUnits>, UnitCubed<AngularVelocity, AngularVelocityUnits>, HyperUnit<AngularVelocity, AngularVelocityUnits>>,
+        ILinearUnit<AngularVelocity, AngularVelocityUnits>,
+        ICompositeUnit
+    {
+        private readonly double _rps;
+
+        #region PROPERTIES
+        public int Dimension => 1;
+
+        public static AngularVelocityUnits BaseScale => AngularVelocityUnits.RadiansPerSecond;
+        public (double Magnitude, AngularVelocityUnits Scale, int ScaleOrdinal) Normalized => (_rps, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, AngularVelocityUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, AngularVelocityUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public AngularVelocity() => _rps = 0;
+        public AngularVelocity(AngularVelocity instance) => this = instance;
+        public AngularVelocity(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _rps = magnitude;
+        }
+        #endregion
+
+        #region METHODS
+        public static AngularVelocity Initialize() => new();
+        public static AngularVelocity Create(AngularVelocity instance) => new(instance);
+        public static AngularVelocity Create(double magnitude) => new(magnitude);
+        [Obsolete("Method not applicable in this struct.", false)]
+        public static AngularVelocity Create(double magnitude, AngularVelocityUnits scale) => new(magnitude);
+
+        public AngularVelocity Duplicate() => new(this);
+        public bool Equals(AngularVelocity other) => Normalized.Magnitude.Equals(other.Normalized.Magnitude);
+        public bool IsValid() => Original.Magnitude >= 0;
+
+        [Obsolete("Method not applicable in this struct.", false)]
+        public AngularVelocity Convert(AngularVelocityUnits toScale)
+        {
+            Converted = Original;
+            return this;
+        }
+        [Obsolete("Method not applicable in this struct.", false)]
+        public double As(AngularVelocityUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        [Obsolete("Method not applicable in this struct.", false)]
+        public AngularVelocity Normalize()
+        {
+            Original = Normalized;
+            return this;
+        }
+
+        public UnitSquared<AngularVelocity, AngularVelocityUnits> Squared() => this * this;
+        public UnitCubed<AngularVelocity, AngularVelocityUnits> Cubed() => this * this * this;
+        public HyperUnit<AngularVelocity, AngularVelocityUnits> Pow(int exp)
+            => new HyperUnit<AngularVelocity, AngularVelocityUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public QuotientUnit<Angle, AngleUnits, Time, TimeUnits> ToComposite()
+            => new QuotientUnit<Angle, AngleUnits, Time, TimeUnits>(Normalized.Magnitude)
+            .SetScales(AngleUnits.Radians, TimeUnits.Second);
+        public static AngularVelocity FromComposite(QuotientUnit<Angle, AngleUnits, Time, TimeUnits> composite)
+            => composite.ScaleValues.Scale1 == AngleUnits.Radians || composite.ScaleValues.Scale2 == TimeUnits.Second ?
+            new(composite.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj) => obj is AngularVelocity other && Equals(other);
+        public override int GetHashCode() => Normalized.Magnitude.GetHashCode();
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(AngularVelocity l, AngularVelocity r) => l.Equals(r);
+        public static bool operator !=(AngularVelocity l, AngularVelocity r) => !(l == r);
+        public static bool operator <(AngularVelocity l, AngularVelocity r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(AngularVelocity l, AngularVelocity r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(AngularVelocity l, AngularVelocity r) => l < r || l == r;
+        public static bool operator >=(AngularVelocity l, AngularVelocity r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static AngularVelocity operator +(AngularVelocity l, AngularVelocity r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static AngularVelocity operator -(AngularVelocity l, AngularVelocity r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static AngularVelocity operator *(AngularVelocity l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static AngularVelocity operator *(double l, AngularVelocity r) => r * l;
+        public static AngularVelocity operator /(AngularVelocity l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<AngularVelocity, AngularVelocityUnits> operator *(AngularVelocity l, AngularVelocity r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(AngularVelocity l, AngularVelocity r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
 }

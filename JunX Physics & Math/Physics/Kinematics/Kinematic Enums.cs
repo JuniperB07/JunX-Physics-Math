@@ -33,4 +33,8 @@ namespace JunX.Physics.Kinematics
         Milligravities
     }
 
+    public enum AngularVelocityUnits
+    {
+        RadiansPerSecond
+    }
 }
