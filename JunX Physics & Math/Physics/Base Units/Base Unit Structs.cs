@@ -178,6 +178,7 @@ namespace JunX.Physics.BaseUnits
         public static Length operator *(Time l, Velocity r) => r * l;
         public static Velocity operator *(Time l, Acceleration r) => r * l;
         public static Angle operator *(Time l, AngularVelocity r) => r * l;
+        public static AngularVelocity operator *(Time l, AngularAcceleration r) => r * l;
         #endregion
     }
 

@@ -37,4 +37,9 @@ namespace JunX.Physics.Kinematics
     {
         RadiansPerSecond
     }
+
+    public enum AngularAccelerationUnits
+    {
+        RadiansPerSecondSquared
+    }
 }

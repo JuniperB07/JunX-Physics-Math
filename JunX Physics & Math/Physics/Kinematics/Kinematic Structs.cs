@@ -292,7 +292,9 @@ namespace JunX.Physics.Kinematics
             => new QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>(Normalized.Magnitude)
             .SetScales(LengthUnits.Meter, TimeUnits.Second);
         public static Acceleration FromComposite(QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits> composite)
-            => new(composite.Original.Magnitude);
+            => composite.Original.Scale1 == LengthUnits.Meter && composite.Original.Scale2 == TimeUnits.Second ?
+            new(composite.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
 
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
@@ -314,6 +316,11 @@ namespace JunX.Physics.Kinematics
         public static Acceleration Average(Velocity deltaV, Time deltaT) => deltaV / deltaT;
         public static Acceleration Average((Velocity Initial, Velocity Final) v, (Time Initial, Time Final) t)
             => Average(Velocity.Delta(v.Initial, v.Final), Time.DeltaT(t.Initial, t.Final));
+
+        public static Acceleration Centripetal(AngularVelocity omega, Length radius) => omega.Squared() * radius;
+        public static Acceleration Tangential(AngularAcceleration alpha, Length radius) => alpha * radius;
+        public static Acceleration TotalCircularMotion(Acceleration centripetal, Acceleration tangential)
+            => (centripetal.Squared() + tangential.Squared()).Sqrt();
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -354,6 +361,19 @@ namespace JunX.Physics.Kinematics
         #endregion
     }
 
+    /// <summary>
+    /// Represents a one-dimensional angular velocity magnitude structure supporting rotational kinematics, composite conversions, kinematic derivations, cross-unit operators, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="AngularVelocity"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IValidatable"/>, <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage rotational rate quantities represented by the standard symbol <see cref="SYMBOL"/> (ω).
+    /// </para>
+    /// <para>
+    /// It maintains a rotational dimension of 1 and normalizes values relative to the SI base unit (<see cref="AngularVelocityUnits.RadiansPerSecond"/>). 
+    /// The structure provides non-negativity validation via <see cref="IsValid"/> based on original magnitude, rotational kinematic derivation over time intervals via ω = Δθ / Δt = (θ_final - θ_initial) / (t_final - t_initial), cross-unit operator interactions (calculating angular displacement via θ = ω * t, tangential velocity via v = ω * r, angular acceleration via α = ω / t, and time duration via t = ω / α), as well as bi-directional composite decomposition with ratio structures (<see cref="QuotientUnit{T1, E1, T2, E2}"/> mapping <see cref="Angle"/> over <see cref="Time"/>) and higher-order dimensional exponentiation (ω², ω³, and ωⁿ).
+    /// </para>
+    /// </remarks>
     public struct AngularVelocity :
         IInitializable<AngularVelocity>, IInitializable<AngularVelocity, double>, IInitializable<AngularVelocity, double, AngularVelocityUnits>,
         IScaleConvertible<AngularVelocity, AngularVelocityUnits>,
@@ -426,7 +446,7 @@ namespace JunX.Physics.Kinematics
             => new QuotientUnit<Angle, AngleUnits, Time, TimeUnits>(Normalized.Magnitude)
             .SetScales(AngleUnits.Radians, TimeUnits.Second);
         public static AngularVelocity FromComposite(QuotientUnit<Angle, AngleUnits, Time, TimeUnits> composite)
-            => composite.ScaleValues.Scale1 == AngleUnits.Radians || composite.ScaleValues.Scale2 == TimeUnits.Second ?
+            => composite.ScaleValues.Scale1 == AngleUnits.Radians && composite.ScaleValues.Scale2 == TimeUnits.Second ?
             new(composite.Original.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
 
@@ -474,6 +494,143 @@ namespace JunX.Physics.Kinematics
         public static Angle operator *(AngularVelocity l, Time r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         public static Velocity operator *(AngularVelocity l, Length r) => r * l;
+
+        public static AngularAcceleration operator /(AngularVelocity l, Time r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static Time operator /(AngularVelocity l, AngularAcceleration r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        #endregion
+    }
+
+    /// <summary>
+    /// Represents a one-dimensional angular acceleration structure supporting rotational kinematics, binary composite transposition, kinematic derivations, cross-unit operators, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="AngularAcceleration"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage rotational acceleration quantities represented by the standard symbol <see cref="SYMBOL"/> (α).
+    /// </para>
+    /// <para>
+    /// It maintains a rotational dimension of 1 and normalizes values relative to the SI base unit (<see cref="AngularAccelerationUnits.RadiansPerSecondSquared"/>). 
+    /// The structure provides rotational kinematic derivation over time intervals via α = Δω / Δt, cross-unit operator interactions (calculating tangential acceleration via a = α * r and angular velocity via ω = α * t), binary composite transposition and bi-directional synthesis with ratio structures (<see cref="QuotientUnit{T1, E1, T2, E2}"/> mapping <see cref="Angle"/> over <see cref="UnitSquared{Time, TimeUnits}"/>), and higher-order dimensional exponentiation (α², α³, and αⁿ).
+    /// </para>
+    /// </remarks>
+    public struct AngularAcceleration :
+        IInitializable<AngularAcceleration>, IInitializable<AngularAcceleration, double>, IInitializable<AngularAcceleration, double, AngularAccelerationUnits>,
+        IScaleConvertible<AngularAcceleration, AngularAccelerationUnits>,
+        INormalized<AngularAccelerationUnits>, INormalizable<AngularAcceleration>,
+        IDimensionAccessible,
+        IValueAccessible<AngularAccelerationUnits>,
+        IDuplicatable<AngularAcceleration>,
+        IEquatable<AngularAcceleration>,
+        IBinaryCompositeTransposable<AngularAcceleration, QuotientUnit<Angle, AngleUnits, UnitSquared<Time, TimeUnits>, TimeUnits>>,
+        IExponentiable<UnitSquared<AngularAcceleration, AngularAccelerationUnits>, UnitCubed<AngularAcceleration, AngularAccelerationUnits>, HyperUnit<AngularAcceleration, AngularAccelerationUnits>>,
+        ILinearUnit<AngularAcceleration, AngularAccelerationUnits>,
+        ICompositeUnit
+    {
+        private readonly double _rps2;
+        public const char SYMBOL = 'α';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+
+        public static AngularAccelerationUnits BaseScale => AngularAccelerationUnits.RadiansPerSecondSquared;
+        public (double Magnitude, AngularAccelerationUnits Scale, int ScaleOrdinal) Normalized => (_rps2, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, AngularAccelerationUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, AngularAccelerationUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public AngularAcceleration() => _rps2 = 0;
+        public AngularAcceleration(AngularAcceleration instance) => this = instance;
+        public AngularAcceleration(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _rps2 = magnitude;
+        }
+        #endregion
+
+        #region METHODS
+        public static AngularAcceleration Initialize() => new();
+        public static AngularAcceleration Create(AngularAcceleration instance) => new(instance);
+        public static AngularAcceleration Create(double magnitude) => new(magnitude);
+        [Obsolete("Method not applicable in this struct.", false)]
+        public static AngularAcceleration Create(double magnitude, AngularAccelerationUnits scale) => new(magnitude);
+
+        public AngularAcceleration Duplicate() => new(this);
+        public bool Equals(AngularAcceleration other) => Normalized.Magnitude.Equals(other.Normalized.Magnitude);
+
+        [Obsolete("Method not applicable in this struct.", false)]
+        public AngularAcceleration Convert(AngularAccelerationUnits toScale)
+        {
+            Converted = Original;
+            return this;
+        }
+        [Obsolete("Method not applicable in this struct.", false)]
+        public double As(AngularAccelerationUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        [Obsolete("Method not applicable in this struct.", false)]
+        public AngularAcceleration Normalize()
+        {
+            Original = Normalized;
+            return this;
+        }
+
+        public UnitSquared<AngularAcceleration, AngularAccelerationUnits> Squared() => this * this;
+        public UnitCubed<AngularAcceleration, AngularAccelerationUnits> Cubed() => this * this * this;
+        public HyperUnit<AngularAcceleration, AngularAccelerationUnits> Pow(int exp)
+            => new HyperUnit<AngularAcceleration, AngularAccelerationUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public QuotientUnit<Angle, AngleUnits, UnitSquared<Time, TimeUnits>, TimeUnits> ToComposite()
+            => new QuotientUnit<Angle, AngleUnits, UnitSquared<Time, TimeUnits>, TimeUnits>(Normalized.Magnitude)
+            .SetScales(AngleUnits.Radians, TimeUnits.Second);
+        public static AngularAcceleration FromComposite(QuotientUnit<Angle, AngleUnits, UnitSquared<Time, TimeUnits>, TimeUnits> composite)
+            => composite.Original.Scale1 == AngleUnits.Radians && composite.Original.Scale2 == TimeUnits.Second ?
+            new(composite.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj) => obj is AngularAcceleration other && Equals(other);
+        public override int GetHashCode() => Normalized.Magnitude.GetHashCode();
+        #endregion
+
+        #region DERIVATIONS
+        public static AngularAcceleration Derive(AngularVelocity deltaOmega, Time deltaT) => deltaOmega / deltaT;
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(AngularAcceleration l, AngularAcceleration r) => l.Equals(r);
+        public static bool operator !=(AngularAcceleration l, AngularAcceleration r) => !(l == r);
+        public static bool operator <(AngularAcceleration l, AngularAcceleration r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(AngularAcceleration l, AngularAcceleration r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(AngularAcceleration l, AngularAcceleration r) => l < r || l == r;
+        public static bool operator >=(AngularAcceleration l, AngularAcceleration r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static AngularAcceleration operator +(AngularAcceleration l, AngularAcceleration r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static AngularAcceleration operator -(AngularAcceleration l, AngularAcceleration r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static AngularAcceleration operator *(AngularAcceleration l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static AngularAcceleration operator *(double l, AngularAcceleration r) => r * l;
+        public static AngularAcceleration operator /(AngularAcceleration l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<AngularAcceleration, AngularAccelerationUnits> operator *(AngularAcceleration l, AngularAcceleration r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(AngularAcceleration l, AngularAcceleration r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Acceleration operator *(AngularAcceleration l, Length r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static AngularVelocity operator *(AngularAcceleration l, Time r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 }

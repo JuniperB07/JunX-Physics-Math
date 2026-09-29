@@ -217,6 +217,10 @@ namespace JunX.Mathematics.Geometry
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         public static Acceleration operator /(UnitSquared<Velocity, VelocityUnits> l, Length r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static Acceleration operator *(UnitSquared<AngularVelocity, AngularVelocityUnits> l, Length r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static Acceleration operator *(Length l, UnitSquared<AngularVelocity, AngularVelocityUnits> r) => r * l;
+        public static Acceleration operator *(Length l, AngularAcceleration r) => r * l;
 
         public static Time operator /(Length l, Velocity r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
