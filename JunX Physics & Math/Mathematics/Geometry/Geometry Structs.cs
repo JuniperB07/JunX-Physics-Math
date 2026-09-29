@@ -153,6 +153,9 @@ namespace JunX.Mathematics.Geometry
         #endregion
 
         #region DERIVATIONS
+        public static Length Derive(Velocity velocity, Time time) => velocity * time;
+        public static Length Derive(Acceleration acceleration, UnitSquared<Time, TimeUnits> timeSquared) => acceleration * timeSquared;
+
         public static Length DeltaX(Length initial, Length final) => final - initial;
         public static Length Diameter(Length radius) => radius * 2.0;
         public static Length Radius(Length diameter) => diameter / 2.0;
@@ -209,8 +212,19 @@ namespace JunX.Mathematics.Geometry
         #region CROSS-UNIT ARITHMETIC OPERATORS
         public static Velocity operator /(Length l, Time r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+
         public static Acceleration operator /(Length l, UnitSquared<Time, TimeUnits> r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static Acceleration operator /(UnitSquared<Velocity, VelocityUnits> l, Length r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+
+        public static Time operator /(Length l, Velocity r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+
+        public static UnitSquared<Time, TimeUnits> operator /(Length l, Acceleration r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static UnitSquared<Velocity, VelocityUnits> operator *(Length l, Acceleration r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 
@@ -805,6 +819,10 @@ namespace JunX.Mathematics.Geometry
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region DERIVATIONS
+        public static Angle DeltaTheta(Angle initial, Angle final) => final - initial;
         #endregion
 
         #region CONDITIONAL OPERATORS

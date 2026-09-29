@@ -126,6 +126,30 @@ namespace JunX.Physics.Kinematics
         }
         #endregion
 
+        #region DERIVATIONS
+        public static Velocity Derive(Length length, Time time) => length / time;
+
+        public static Velocity Average(Velocity[] velocities)
+        {
+            Velocity sum = new();
+
+            for (int i = 0; i < velocities.Length; i++)
+                sum += velocities[i];
+
+            return sum / velocities.Length;
+        }
+        public static Velocity Average(Length deltaX, Time deltaT) => deltaX / deltaT;
+        public static Velocity Average(Length initialX, Length finalX, Time initialT, Time finalT)
+            => Average(Length.DeltaX(initialX, finalX), Time.DeltaT(initialT, finalT));
+        public static Velocity Averate(Velocity v0, Velocity v) => (v0 + v) / 2;
+
+        public static Velocity Final(Velocity v0, Acceleration a, Time t) => v0 + (a * t);
+        public static Velocity Final(Velocity v0, Acceleration a, Length deltaX)
+            => (v0.Squared() + (2 * a * deltaX)).Sqrt();
+
+        public static Velocity Delta(Velocity initial, Velocity final) => final - initial;
+        #endregion
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(Velocity l, Velocity r) => l.Equals(r);
         public static bool operator !=(Velocity l, Velocity r) => !l.Equals(r);
@@ -153,6 +177,13 @@ namespace JunX.Physics.Kinematics
 
         public static double operator /(Velocity l, Velocity r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Length operator *(Velocity l, Time r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static Acceleration operator /(Velocity l, Time r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         #endregion
     }
 
@@ -270,6 +301,20 @@ namespace JunX.Physics.Kinematics
         }
         #endregion
 
+        #region DERIVATIONS
+        public static Acceleration Derive(Velocity velocity, Time time) => velocity / time;
+        public static Acceleration Derive((Velocity Final, Velocity Initial) v, Length deltaX)
+            => (v.Final.Squared() - v.Initial.Squared()) / (2 * deltaX);
+        public static Acceleration Derive((Length Initial, Length Final) x, Velocity v0, Time t)
+            => (2 * (Length.DeltaX(x.Initial, x.Final) - (v0 * t))) / t.Squared();
+
+        public static Acceleration Average(Velocity deltaV, Time deltaT) => deltaV / deltaT;
+        public static Acceleration Average((Velocity Initial, Velocity Final) v, (Time Initial, Time Final) t)
+            => Average(Velocity.Delta(v.Initial, v.Final), Time.DeltaT(t.Initial, t.Final));
+
+
+        #endregion
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(Acceleration l, Acceleration r) => l.Equals(r);
         public static bool operator !=(Acceleration l, Acceleration r) => !l.Equals(r);
@@ -296,6 +341,15 @@ namespace JunX.Physics.Kinematics
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
 
         public static double operator /(Acceleration l, Acceleration r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Velocity operator *(Acceleration l, Time r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static Length operator *(Acceleration l, UnitSquared<Time, TimeUnits> r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static Length operator *(UnitSquared<Time, TimeUnits> l, Acceleration r) => r * l;
+        public static UnitSquared<Velocity, VelocityUnits> operator *(Acceleration l, Length r) => r * l;
         #endregion
     }
 }

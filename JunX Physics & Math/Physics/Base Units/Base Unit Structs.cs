@@ -1,4 +1,5 @@
 ﻿using JunX.Mathematics.Geometry;
+using JunX.Physics.Kinematics;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualBasic;
 using System;
@@ -139,6 +140,9 @@ namespace JunX.Physics.BaseUnits
         #endregion
 
         #region DERIVATIONS
+        public static Time Derive(Length length, Velocity velocity) => length / velocity;
+        public static Time Derive(Length length, Acceleration acceleration) => (length / acceleration).Sqrt();
+
         public static Time DeltaT(Time initial, Time final) => final - initial;
         #endregion
 
@@ -168,6 +172,11 @@ namespace JunX.Physics.BaseUnits
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
 
         public static double operator /(Time l, Time r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Length operator *(Time l, Velocity r) => r * l;
+        public static Velocity operator *(Time l, Acceleration r) => r * l;
         #endregion
     }
 
