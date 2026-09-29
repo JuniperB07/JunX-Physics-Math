@@ -209,6 +209,8 @@ namespace JunX.Mathematics.Geometry
         #region CROSS-UNIT ARITHMETIC OPERATORS
         public static Velocity operator /(Length l, Time r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static Acceleration operator /(Length l, UnitSquared<Time, TimeUnits> r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         #endregion
     }
 

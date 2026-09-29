@@ -15,6 +15,8 @@ namespace JunX
     {
         public static readonly Velocity c = new(299792458);
         public static readonly Velocity SpeedOfLight = c;
+
+        public static readonly Acceleration EarthGravity = new(9.8);
     }
 
     /// <summary>

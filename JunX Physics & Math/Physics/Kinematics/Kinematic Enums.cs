@@ -17,4 +17,20 @@ namespace JunX.Physics.Kinematics
         Knot,
         KilometersPerMillionYears
     }
+
+    public enum AccelerationUnits
+    {
+        MetersPerSecondSquared,
+        Galileo,
+        Milligal,
+        Microgal,
+        KilometerspPerSecondSquared,
+        KilometersPerHourPerSecond,
+        FeetPerSecondSquared,
+        InchesPerSecondSquared,
+        MilesPerHourPerSecond,
+        StandardGravity,
+        Milligravities
+    }
+
 }

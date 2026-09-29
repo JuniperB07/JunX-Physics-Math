@@ -296,4 +296,16 @@ namespace JunX
     #region DIMENSIONAL UNIT
     public interface IDimensionalUnit { }
     #endregion
+
+    #region BINARY COMPOSITE TRANSPOSITION
+    public interface IBinaryCompositeTransposable<Str, TComp>
+        where TComp: struct, ICompositeUnit
+        where Str : struct, IDimensionAccessible,
+            IInitializable<Str>, IInitializable<Str, double>,
+            INormalizable<Str>
+    {
+        public TComp ToComposite();
+        public static abstract Str FromComposite(TComp Arg1);
+    }
+    #endregion
 }

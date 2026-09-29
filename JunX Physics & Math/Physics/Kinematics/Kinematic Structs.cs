@@ -30,6 +30,7 @@ namespace JunX.Physics.Kinematics
         IDuplicatable<Velocity>,
         IEquatable<Velocity>,
         IValidatable,
+        IBinaryCompositeTransposable<Velocity, QuotientUnit<Length, LengthUnits, Time, TimeUnits>>,
         IExponentiable<UnitSquared<Velocity, VelocityUnits>, UnitCubed<Velocity, VelocityUnits>, HyperUnit<Velocity, VelocityUnits>>,
         ILinearUnit<Velocity, VelocityUnits>,
         ICompositeUnit
@@ -155,5 +156,146 @@ namespace JunX.Physics.Kinematics
         #endregion
     }
 
+    /// <summary>
+    /// Represents a one-dimensional acceleration structure supporting scale conversions, binary composite transposition, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Acceleration"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSquared, TCubed, THyper}"/> to manage linear rate of change of velocity across standard SI, gravimetric (Galileo, Milligal), imperial, and gravitational constant scales (<see cref="AccelerationUnits.StandardGravity"/>).
+    /// </para>
+    /// <para>
+    /// It maintains a kinematic dimension of 1 and normalizes values relative to the SI base unit (<see cref="AccelerationUnits.MetersPerSecondSquared"/>). 
+    /// The structure provides scale conversion pipelines, binary composite transposition and bi-directional synthesis with fundamental composite ratio units (<see cref="QuotientUnit{T1, E1, T2, E2}"/> mapping <see cref="Length"/> over <see cref="UnitSquared{Time, TimeUnits}"/>), relational comparisons, linear arithmetic, and dimensional exponentiation into higher-order acceleration structures (<see cref="UnitSquared{TUnit, TEnum}"/>, <see cref="UnitCubed{TUnit, TEnum}"/>, and <see cref="HyperUnit{TUnit, TEnum}"/>).
+    /// </para>
+    /// </remarks>
+    public struct Acceleration :
+        IInitializable<Acceleration>, IInitializable<Acceleration, double>, IInitializable<Acceleration, double, AccelerationUnits>,
+        IScaleMappable<AccelerationUnits>, IScaleConvertible<Acceleration, AccelerationUnits>,
+        INormalized<AccelerationUnits>, INormalizable<Acceleration>,
+        IDimensionAccessible,
+        IValueAccessible<AccelerationUnits>,
+        IDuplicatable<Acceleration>,
+        IEquatable<Acceleration>,
+        IBinaryCompositeTransposable<Acceleration, QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>>,
+        IExponentiable<UnitSquared<Acceleration, AccelerationUnits>, UnitCubed<Acceleration, AccelerationUnits>, HyperUnit<Acceleration, AccelerationUnits>>,
+        ILinearUnit<Acceleration, AccelerationUnits>,
+        ICompositeUnit
+    {
+        private readonly double _mps2;
 
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<AccelerationUnits, double> Mapper => new()
+        {
+            { AccelerationUnits.MetersPerSecondSquared,     1.0 },
+
+            { AccelerationUnits.Galileo,                    0.01 },         // 1 Gal = 1 cm/s² = 0.01 m/s²
+            { AccelerationUnits.Milligal,                   1e-5 },         // 1 mGal = 10⁻³ Gal = 10⁻⁵ m/s²
+            { AccelerationUnits.Microgal,                   1e-8 },
+
+            { AccelerationUnits.KilometerspPerSecondSquared, 1e3 },         // 1 km/s² = 1,000 m/s²
+            { AccelerationUnits.KilometersPerHourPerSecond,  1.0 / 3.6 },
+
+            { AccelerationUnits.FeetPerSecondSquared,       0.3048 },       // 1 ft/s² = 0.3048 m/s² (exact)
+            { AccelerationUnits.InchesPerSecondSquared,      0.0254 },       // 1 in/s² = 0.0254 m/s² (exact)
+            { AccelerationUnits.MilesPerHourPerSecond,      0.44704 },
+
+            { AccelerationUnits.StandardGravity,            9.80665 },      // 1 g₀ = 9.80665 m/s² (standard gravity)
+            { AccelerationUnits.Milligravities,             9.80665e-3 }
+        };
+
+        public static AccelerationUnits BaseScale => AccelerationUnits.MetersPerSecondSquared;
+        public (double Magnitude, AccelerationUnits Scale, int ScaleOrdinal) Normalized => (_mps2, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, AccelerationUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, AccelerationUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Acceleration() => _mps2 = 0;
+        public Acceleration(Acceleration instance) => this = instance;
+        public Acceleration(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _mps2 = magnitude;
+        }
+        public Acceleration(double magnitude, AccelerationUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _mps2 = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Acceleration Initialize() => new();
+        public static Acceleration Create(Acceleration instance) => new(instance);
+        public static Acceleration Create(double magnitude) => new(magnitude);
+        public static Acceleration Create(double magnitude, AccelerationUnits scale) => new(magnitude, scale);
+
+        public Acceleration Duplicate() => new(this);
+        public bool Equals(Acceleration other) => Normalized.Magnitude == other.Normalized.Magnitude;
+
+        public Acceleration Convert(AccelerationUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(AccelerationUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Acceleration Normalize()
+        {
+            Original = (_mps2, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Acceleration, AccelerationUnits> Squared() => this * this;
+        public UnitCubed<Acceleration, AccelerationUnits> Cubed() => this * this * this;
+        public HyperUnit<Acceleration, AccelerationUnits> Pow(int exp)
+            => new HyperUnit<Acceleration, AccelerationUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits> ToComposite()
+            => new QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>(Normalized.Magnitude)
+            .SetScales(LengthUnits.Meter, TimeUnits.Second);
+        public static Acceleration FromComposite(QuotientUnit<Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits> composite)
+            => new(composite.Original.Magnitude);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Acceleration l, Acceleration r) => l.Equals(r);
+        public static bool operator !=(Acceleration l, Acceleration r) => !l.Equals(r);
+        public static bool operator <(Acceleration l, Acceleration r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Acceleration l, Acceleration r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Acceleration l, Acceleration r) => l < r || l == r;
+        public static bool operator >=(Acceleration l, Acceleration r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Acceleration operator +(Acceleration l, Acceleration r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Acceleration operator -(Acceleration l, Acceleration r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Acceleration operator *(Acceleration l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Acceleration operator *(double l, Acceleration r) => r * l;
+        public static Acceleration operator /(Acceleration l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Acceleration, AccelerationUnits> operator *(Acceleration l, Acceleration r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Acceleration l, Acceleration r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
 }
