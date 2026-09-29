@@ -1,4 +1,5 @@
 ﻿using JunX.Mathematics.Geometry;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
@@ -135,6 +136,10 @@ namespace JunX.Physics.BaseUnits
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region DERIVATIONS
+        public static Time DeltaT(Time initial, Time final) => final - initial;
         #endregion
 
         #region CONDITIONAL OPERATORS

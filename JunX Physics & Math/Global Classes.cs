@@ -1,4 +1,5 @@
 ﻿using JunX.Mathematics.Geometry;
+using JunX.Physics.Kinematics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,6 +11,12 @@ using System.Xml.XPath;
 
 namespace JunX
 {
+    public static class Constants
+    {
+        public static readonly Velocity c = new(299792458);
+        public static readonly Velocity SpeedOfLight = c;
+    }
+
     /// <summary>
     /// Provides general-purpose static utility methods for scale transformation and value mapping 
     /// across unit scale enumerations within the dimensional framework.
@@ -54,6 +61,7 @@ namespace JunX
         public const string COMPOSITE_UNIT_SCALE_MISMATCH = "Cannot operate on composite unit instances with different scale values.";
         public const string DIMENSIONAL_CONVERSION = "Unable to convert to the desired unit. Please check the dimensionality of each element.";
         public const string ARRAY_LENGTH_MISMATCH = "Length of both arrays must be the same size.";
+        public const string COMPOSITE_SCALES_MISMATCH = "Scales of the specified composite unit does not match the requirement to transpose.";
 
         public static string Insufficient_Array_Length(int minimumLength)
             => $"Array length must not be less than {minimumLength}.";

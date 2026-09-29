@@ -1,4 +1,6 @@
-﻿using System;
+﻿using JunX.Physics.BaseUnits;
+using JunX.Physics.Kinematics;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
@@ -202,6 +204,11 @@ namespace JunX.Mathematics.Geometry
 
         public static double operator /(Length l, Length r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT ARITHMETIC OPERATORS
+        public static Velocity operator /(Length l, Time r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         #endregion
     }
 
