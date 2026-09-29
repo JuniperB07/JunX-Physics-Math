@@ -225,6 +225,9 @@ namespace JunX.Mathematics.Geometry
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         public static UnitSquared<Velocity, VelocityUnits> operator *(Length l, Acceleration r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static Velocity operator *(Length l, AngularVelocity r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 
@@ -730,6 +733,7 @@ namespace JunX.Mathematics.Geometry
         IEquatable<Angle>
     {
         private readonly double _rad;
+        public const char SYMBOL = 'θ';
 
         #region PROPERTIES
         public int Dimension => 0;
@@ -822,7 +826,7 @@ namespace JunX.Mathematics.Geometry
         #endregion
 
         #region DERIVATIONS
-        public static Angle DeltaTheta(Angle initial, Angle final) => final - initial;
+        public static Angle Delta(Angle initial, Angle final) => final - initial;
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -840,7 +844,14 @@ namespace JunX.Mathematics.Geometry
         public static Angle operator +(Angle l, Angle r)
             => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
         public static Angle operator -(Angle l, Angle r)
-            => new(l.Normalized.Magnitude - r.Normalized.Magnitude); 
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static AngularVelocity operator /(Angle l, Time r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static Time operator /(Angle l, AngularVelocity r)
+            => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         #endregion
     }
 }

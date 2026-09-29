@@ -149,6 +149,8 @@ namespace JunX.Physics.Kinematics
             => (v0.Squared() + (2 * a * deltaX)).Sqrt();
 
         public static Velocity Delta(Velocity initial, Velocity final) => final - initial;
+
+        public static Velocity Tangential(Length radius, AngularVelocity omega) => radius * omega;
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -367,6 +369,7 @@ namespace JunX.Physics.Kinematics
         ICompositeUnit
     {
         private readonly double _rps;
+        public const char SYMBOL = 'ω';
 
         #region PROPERTIES
         public int Dimension => 1;
@@ -431,6 +434,13 @@ namespace JunX.Physics.Kinematics
         public override int GetHashCode() => Normalized.Magnitude.GetHashCode();
         #endregion
 
+        #region DERIVATIONS
+        public static AngularVelocity Derive(Angle deltaTheta, Time deltaT) => deltaTheta / deltaT;
+        public static AngularVelocity Derive((Angle Initial, Angle Final) theta, (Time Initial, Time Final) time)
+            => Derive(Angle.Delta(theta.Initial, theta.Final), Time.DeltaT(time.Initial, time.Final));
+
+        #endregion
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(AngularVelocity l, AngularVelocity r) => l.Equals(r);
         public static bool operator !=(AngularVelocity l, AngularVelocity r) => !(l == r);
@@ -458,6 +468,12 @@ namespace JunX.Physics.Kinematics
 
         public static double operator /(AngularVelocity l, AngularVelocity r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Angle operator *(AngularVelocity l, Time r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static Velocity operator *(AngularVelocity l, Length r) => r * l;
         #endregion
     }
 }

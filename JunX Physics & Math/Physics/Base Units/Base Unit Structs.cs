@@ -177,6 +177,7 @@ namespace JunX.Physics.BaseUnits
         #region CROSS-UNIT OPERATORS
         public static Length operator *(Time l, Velocity r) => r * l;
         public static Velocity operator *(Time l, Acceleration r) => r * l;
+        public static Angle operator *(Time l, AngularVelocity r) => r * l;
         #endregion
     }
 
