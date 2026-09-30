@@ -15,6 +15,191 @@ using JunX.Mathematics;
 namespace JunX
 {
     /// <summary>
+    /// Represents a static identity marker and unit magnitude constant for zero-dimensional scalar physical quantities.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="DimensionlessOne"/> serves as a lightweight, immutable value type contract defining an invariant base scale magnitude of 1.0 for non-dimensional scalar operations.
+    /// </para>
+    /// <para>
+    /// It is primarily utilized within physical measurement frameworks to provide unit unity values during scale conversions, non-dimensional ratio evaluations, normalized product cancellation pipelines, and dimensionless quantity initializations.
+    /// </para>
+    /// </remarks>
+    public readonly struct DimensionlessOne
+    {
+        public static double Magnitude => 1.0;
+    }
+
+    /// <summary>
+    /// Represents a generic one-dimensional inverse or reciprocal physical unit wrapper supporting variable numerators, scale conversions, normalization, linear projection, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <typeparam name="Str">The underlying target dimensional struct type implementing physical measurement initialization and normalization contracts.</typeparam>
+    /// <typeparam name="En">The enumeration type representing unit scales associated with <typeparamref name="Str"/>.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// <see cref="ReciprocalUnit{Str, En}"/> implements foundational physical measurement contracts including <see cref="IDimensionalUnit"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IScaleConvertible{TSelf, TEnum}"/>, <see cref="IValueAccessible{TEnum}"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to model inverted physical dimensions (X⁻¹) relative to a target struct <typeparamref name="Str"/>.
+    /// </para>
+    /// <para>
+    /// The generic struct wraps inverse dimensional quantities while managing scalar inversion through a configurable <see cref="Numerator"/> (defaulting to 1.0). 
+    /// Scale normalization and unit conversions are lazily computed via inverse delegation to the underlying struct <typeparamref name="Str"/>. 
+    /// It supports projection back to the linear domain via <see cref="ToLinearUnit"/> (valid when <see cref="Numerator"/> equals zero), relational comparison operators, linear scalar arithmetic, cross-unit division, and higher-order dimensional exponentiation (U⁻² and U⁻ⁿ).
+    /// </para>
+    /// </remarks>
+    public struct ReciprocalUnit<Str, En> :
+        IDimensionAccessible,
+        IInitializable<ReciprocalUnit<Str, En>>, IInitializable<ReciprocalUnit<Str, En>, double>, IInitializable<ReciprocalUnit<Str, En>, double, En>,
+        INormalized<En>, INormalizable<ReciprocalUnit<Str, En>>,
+        IScaleConvertible<ReciprocalUnit<Str, En>, En>,
+        IDuplicatable<ReciprocalUnit<Str, En>>,
+        IValueAccessible<En>,
+        IEquatable<ReciprocalUnit<Str, En>>,
+        IExponentiable<ReciprocalUnit<Str, En>, En>,
+        IDimensionalUnit
+
+        where En : Enum
+        where Str : struct, IDimensionAccessible,
+            IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+            INormalized<En>, INormalizable<Str>,
+            IScaleConvertible<Str, En>, IValueAccessible<En>
+    {
+        #region PROPERTIES
+        private static int BaseScaleOrdinal
+        {
+            get
+            {
+                En bs = BaseScale;
+                return Unsafe.As<En, int>(ref bs);
+            }
+        }
+
+        public int Dimension => 1;
+        public double Numerator { get; private set; } = 1.0;
+
+        public static En BaseScale => Str.BaseScale;
+        public (double Magnitude, En Scale, int ScaleOrdinal) Normalized
+        {
+            get
+            {
+                if (Original.Scale.Equals(BaseScale))
+                    return Original;
+
+                double bMag = Numerator / Original.Magnitude;
+                Str bUnit = Str.Create(bMag, Original.Scale);
+
+                return (Numerator / bUnit.Normalized.Magnitude,
+                    bUnit.Normalized.Scale,
+                    bUnit.Normalized.ScaleOrdinal);
+            }
+        }
+
+        public (double Magnitude, En Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, BaseScaleOrdinal);
+        public (double Magnitude, En Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, BaseScaleOrdinal);
+        #endregion
+
+        #region CONSTRUCTORS
+        public ReciprocalUnit() { }
+        public ReciprocalUnit(ReciprocalUnit<Str, En> instance) => this = instance;
+        public ReciprocalUnit(double magnitude) => Original = (magnitude, BaseScale, BaseScaleOrdinal);
+        public ReciprocalUnit(double magnitude, En scale) => Original = (magnitude, scale, Unsafe.As<En, int>(ref scale));
+        #endregion
+
+        #region METHODS
+        public static ReciprocalUnit<Str, En> Initialize() => new();
+        public static ReciprocalUnit<Str, En> Create(ReciprocalUnit<Str, En> instance) => new(instance);
+        public static ReciprocalUnit<Str, En> Create(double magnitude) => new(magnitude);
+        public static ReciprocalUnit<Str, En> Create(double magnitude, En scale) => new(magnitude, scale);
+
+        public ReciprocalUnit<Str, En> SetNumerator(double numerator)
+        {
+            Numerator = numerator;
+            return this;
+        }
+
+        public ReciprocalUnit<Str, En> Duplicate() => new(this);
+        public bool Equals(ReciprocalUnit<Str, En> other)
+            => Normalized.Magnitude == other.Normalized.Magnitude;
+
+        public ReciprocalUnit<Str, En> Convert(En toScale)
+        {
+            if (toScale.Equals(Original.Scale))
+            {
+                Converted = (Original.Magnitude, Original.Scale, Original.ScaleOrdinal);
+                return this;
+            }
+
+            double bMag = Numerator / Original.Magnitude;
+            Str bUnit = Str.Create(bMag, Original.Scale).Convert(toScale);
+            Converted = (1.0 / bUnit.Converted.Magnitude, toScale, Unsafe.As<En, int>(ref toScale));
+            return this;
+        }
+        public double As(En scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public ReciprocalUnit<Str, En> Normalize()
+        {
+            Original = (Normalized.Magnitude, Normalized.Scale, Normalized.ScaleOrdinal);
+            return this;
+        }
+
+        public Str ToLinearUnit()
+            => Numerator == 0 ?
+            Str.Create(Normalized.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.NON_ZERO_RECIPROCAL_NUMERATOR);
+
+        public UnitSquared<ReciprocalUnit<Str, En>, En> Squared() => this * this;
+        public UnitCubed<ReciprocalUnit<Str, En>, En> Cubed() => this * this * this;
+        public HyperUnit<ReciprocalUnit<Str, En>, En> Pow(int exp)
+            => new HyperUnit<ReciprocalUnit<Str, En>, En>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r) => l.Equals(r);
+        public static bool operator !=(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r) => !l.Equals(r);
+        public static bool operator <(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r) => l < r || l == r;
+        public static bool operator >=(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static ReciprocalUnit<Str, En> operator +(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static ReciprocalUnit<Str, En> operator -(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static ReciprocalUnit<Str, En> operator *(ReciprocalUnit<Str, En> l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static ReciprocalUnit<Str, En> operator *(double l, ReciprocalUnit<Str, En> r) => r * l;
+        public static ReciprocalUnit<Str, En> operator /(ReciprocalUnit<Str, En> l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<ReciprocalUnit<Str, En>, En> operator *(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(ReciprocalUnit<Str, En> l, ReciprocalUnit<Str, En> r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static ReciprocalUnit<Str, En> operator /(double l, ReciprocalUnit<Str, En> r)
+            => l <= r.Numerator ?
+            new ReciprocalUnit<Str, En>(l / r.Normalized.Magnitude).SetNumerator(r.Numerator - l) :
+            throw new InvalidOperationException(ErrorMsg.INVALID_RECIPROCAL_NUMERATOR);
+        #endregion
+    }
+
+    /// <summary>
     /// Represents a generic two-dimensional (squared) unit measurement capable of scale conversion, 
     /// normalization, cross-dimensional arithmetic, exponentiation, and dimensional reduction.
     /// </summary>

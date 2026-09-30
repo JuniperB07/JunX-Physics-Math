@@ -64,6 +64,9 @@ namespace JunX
         public const string DIMENSIONAL_CONVERSION = "Unable to convert to the desired unit. Please check the dimensionality of each element.";
         public const string ARRAY_LENGTH_MISMATCH = "Length of both arrays must be the same size.";
         public const string COMPOSITE_SCALES_MISMATCH = "Scales of the specified composite unit does not match the requirement to transpose.";
+        public const string INVALID_RECIPROCAL_NUMERATOR = "Reciprocal numerator cannot be negative.";
+        public const string NON_ZERO_RECIPROCAL_NUMERATOR = "Reciprocal numerator must be 0.";
+        public const string NON_INVERSE_RECIPROCAL = "ReciprocalUnit numerator value is not 1.";
 
         public static string Insufficient_Array_Length(int minimumLength)
             => $"Array length must not be less than {minimumLength}.";

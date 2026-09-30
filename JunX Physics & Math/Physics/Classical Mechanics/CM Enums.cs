@@ -171,4 +171,27 @@ namespace JunX.Physics.ClassicalMechanics
         PlanckTorque,
         AtomicTorque
     }
+
+    public enum FrequencyUnits
+    {
+        Hertz,
+        Millihertz,
+        Kilohertz,
+        Megahertz,
+        Gigahertz,
+        Terahertz,
+        Petahertz,
+        Exahertz,
+        RevolutionsPerMinute,
+        RevolutionsPerSecond,
+        RadianPerSecond,
+        DegreesPerSecond,
+        CyclePerSecond,
+        CyclePerMinute,
+        ActionPerMinute,
+        BeatsPerMinute,
+        Fresnel,
+        PlanckFrequency,
+        AtomicFrequency
+    }
 }

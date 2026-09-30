@@ -1140,4 +1140,161 @@ namespace JunX.Physics.ClassicalMechanics
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
+
+    /// <summary>
+    /// Represents a one-dimensional periodic repetition rate and angular frequency physical measurement structure supporting multi-system scale conversions, inverse time transposition, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Frequency"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to manage oscillation rates, rotational speeds, and periodic physical event quantities represented by the standard symbol <see cref="SYMBOL"/> (f).
+    /// </para>
+    /// <para>
+    /// It maintains a frequency dimension of 1 and normalizes values relative to the SI base unit (<see cref="FrequencyUnits.Hertz"/>). 
+    /// The structure provides scale conversion pipelines across standard SI metric prefixes (mHz to EHz), rotational and angular velocities (rpm, rps, rad/s, deg/s), time-rate metrics (cycles/min, beats/min), spectroscopic historical units (Fresnel), and fundamental physics constants (Planck frequency, atomic frequency). 
+    /// It supports bi-directional reciprocal transformations with temporal duration (f = 1 / T via <see cref="ReciprocalUnit{Str, En}"/> mapping <see cref="Time"/>), relational comparison operators, linear arithmetic, and higher-order dimensional exponentiation (f², f³, and fⁿ).
+    /// </para>
+    /// </remarks>
+    public struct Frequency :
+        IInitializable<Frequency>, IInitializable<Frequency, double>, IInitializable<Frequency, double, FrequencyUnits>,
+        IScaleMappable<FrequencyUnits>, IScaleConvertible<Frequency, FrequencyUnits>,
+        INormalized<FrequencyUnits>, INormalizable<Frequency>,
+        IDimensionAccessible,
+        IValueAccessible<FrequencyUnits>,
+        IDuplicatable<Frequency>,
+        IExponentiable<Frequency, FrequencyUnits>,
+        ILinearUnit<Frequency, FrequencyUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Hz;
+        public const char SYMBOL = 'f';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<FrequencyUnits, double> Mapper => new()
+        {
+            // SI Metric Units
+            { FrequencyUnits.Hertz, 1.0 },
+            { FrequencyUnits.Millihertz, 1e-3 },
+            { FrequencyUnits.Kilohertz, 1e3 },
+            { FrequencyUnits.Megahertz, 1e6 },
+            { FrequencyUnits.Gigahertz, 1e9 },
+            { FrequencyUnits.Terahertz, 1e12 },
+            { FrequencyUnits.Petahertz, 1e15 },
+            { FrequencyUnits.Exahertz, 1e18 },
+
+            // Rotational & Angular Units
+            { FrequencyUnits.RevolutionsPerMinute, 1.0 / 60.0 },      // ~0.016666666666666666 Hz
+            { FrequencyUnits.RevolutionsPerSecond, 1.0 },             // 1 rps = 1 Hz
+            { FrequencyUnits.RadianPerSecond, 1.0 / (2.0 * Math.PI) }, // f = ω / 2π (~0.15915494309189535 Hz)
+            { FrequencyUnits.DegreesPerSecond, 1.0 / 360.0 },         // ~0.002777777777777778 Hz
+
+            // Time-Based Reciprocal & Rate Units
+            { FrequencyUnits.CyclePerSecond, 1.0 },
+            { FrequencyUnits.CyclePerMinute, 1.0 / 60.0 },
+            { FrequencyUnits.ActionPerMinute, 1.0 / 60.0 },
+            { FrequencyUnits.BeatsPerMinute, 1.0 / 60.0 },
+
+            // Spectroscopic, Theoretical & Quantum Units
+            { FrequencyUnits.Fresnel, 1e12 },                        // 1 Fresnel = 1 THz = 10^12 Hz
+            { FrequencyUnits.PlanckFrequency, 1.85487e43 },           // 1 / t_P (~1.85487 x 10^43 Hz)
+            { FrequencyUnits.AtomicFrequency, 4.1341373335e16 }       // E_h / hbar (~4.134137 x 10^16 Hz)
+        };
+
+        public static FrequencyUnits BaseScale => FrequencyUnits.Hertz;
+        public (double Magnitude, FrequencyUnits Scale, int ScaleOrdinal) Normalized => (0, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, FrequencyUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, FrequencyUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Frequency() => _Hz = 0;
+        public Frequency(Frequency instance) => this = instance;
+        public Frequency(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Hz = magnitude;
+        }
+        public Frequency(double magnitude, FrequencyUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Hz = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Frequency Initialize() => new();
+        public static Frequency Create(Frequency instance) => new(instance);
+        public static Frequency Create(double magnitude) => new(magnitude);
+        public static Frequency Create(double magnitude, FrequencyUnits scale) => new(magnitude, scale);
+
+        public Frequency Duplicate() => new(this);
+        public bool Equals(Frequency other) => _Hz == other._Hz;
+
+        public Frequency Convert(FrequencyUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(FrequencyUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Frequency Normalize()
+        {
+            Original = (_Hz, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Frequency, FrequencyUnits> Squared() => this * this;
+        public UnitCubed<Frequency, FrequencyUnits> Cubed() => this * this * this;
+        public HyperUnit<Frequency, FrequencyUnits> Pow(int exp)
+            => new HyperUnit<Frequency, FrequencyUnits>(Math.Pow(_Hz, exp)).SetDimension(exp);
+
+        public ReciprocalUnit<Time, TimeUnits> ToReciprocalUnit()
+            => new ReciprocalUnit<Time, TimeUnits>(_Hz).SetNumerator(1.0);
+        public static Frequency FromReciprocalUnit(ReciprocalUnit<Time, TimeUnits> rUnit)
+            => rUnit.Numerator == 1.0 ?
+            new(rUnit.Normalized.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.NON_INVERSE_RECIPROCAL);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Frequency l, Frequency r) => l.Equals(r);
+        public static bool operator !=(Frequency l, Frequency r) => !l.Equals(r);
+        public static bool operator <(Frequency l, Frequency r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Frequency l, Frequency r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Frequency l, Frequency r) => l < r || l == r;
+        public static bool operator >=(Frequency l, Frequency r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Frequency operator +(Frequency l, Frequency r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Frequency operator -(Frequency l, Frequency r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Frequency operator *(Frequency l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Frequency operator *(double l, Frequency r) => r * l;
+        public static Frequency operator /(Frequency l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Frequency, FrequencyUnits> operator *(Frequency l, Frequency r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Frequency l, Frequency r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+    }
 }
