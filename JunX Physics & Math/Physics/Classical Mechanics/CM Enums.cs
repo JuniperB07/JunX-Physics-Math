@@ -85,4 +85,55 @@ namespace JunX.Physics.ClassicalMechanics
         PlanckPower,
         HartreePerAtomicUnitTime
     }
+
+    public enum PressureUnits
+    {
+        Pascal,
+        Hectopascal,
+        Kilopascal,
+        Megapascal,
+        Gigapascal,
+        Bar,
+        Millibar,
+        Barye,
+        Atmosphere_Standard,
+        Atmosphere_Technical,
+        Torr,
+        Mercury_Millimeter,
+        Mercury_Inch,
+        Water_Centimeter,
+        Water_Millimeter,
+        Water_Inch,
+        Water_Foot,
+        PoundPerSquareInch,
+        PoundPerSquareFoot,
+        KipPerSquareInch,
+        OuncePerSquareInch,
+        PoundalPerSquareFoot,
+        LongTonPerSquareInch,
+        ShortTonPerSquareInch,
+        PlanckPressure,
+        AtomicPressure
+    }
+
+    public enum MomentumUnits
+    {
+        NewtonPerSecond,
+        Gram_Centimeter_PerSecond,
+        DyneSecond,
+        Tonne_Meter_PerSecond,
+        Pound_Foot_PerSecond,
+        Pound_ForceS_econd,
+        Poundal_Second,
+        Slug_Foot_PerSecond,
+        Ounce_Inch_PerSecond,
+        Electronvolt_Per_C,
+        KiloElectronvolt_Per_C,
+        MegaElectronvolt_Per_C,
+        GigaElectronvolt_Per_C,
+        TeraElectronvolt_Per_C,
+        SolarMass_AstronomicalUnit_PerYear,
+        PlanckMomentum,
+        AtomicMomentum
+    }
 }

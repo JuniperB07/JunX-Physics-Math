@@ -513,4 +513,327 @@ namespace JunX.Physics.ClassicalMechanics
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
+
+    /// <summary>
+    /// Represents a one-dimensional fluid and mechanical pressure structure supporting multi-system scale conversions, binary composite transposition, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Pressure"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to manage continuous mechanical and fluid pressure quantities represented by the standard symbol <see cref="SYMBOL"/> (P).
+    /// </para>
+    /// <para>
+    /// It maintains a pressure dimension of 1 and normalizes values relative to the SI base unit (<see cref="PressureUnits.Pascal"/>). 
+    /// The structure provides scale conversion pipelines across SI and metric prefixes (Pa to GPa, bar, mbar, barye), standard and technical atmospheres, manometric liquid head columns (Torr, mmHg, inHg, cmH₂O, mmH₂O, inH₂O, ftH₂O), imperial and customary stress scales (psi, psf, ksi, oz/in², pdl/ft², ton/in²), and theoretical extremes (Planck pressure, atomic pressure). 
+    /// It supports bi-directional binary composite transposition with force distribution dynamics (P = F / A via <see cref="QuotientUnit{T1, E1, T2, E2}"/> mapping <see cref="Force"/> over <see cref="Area"/>), relational comparison operators, linear arithmetic, and higher-order dimensional exponentiation (P², P³, and Pⁿ).
+    /// </para>
+    /// </remarks>
+    public struct Pressure :
+        IInitializable<Pressure>, IInitializable<Pressure, double>, IInitializable<Pressure, double, PressureUnits>,
+        IScaleMappable<PressureUnits>, IScaleConvertible<Pressure, PressureUnits>,
+        INormalized<PressureUnits>, INormalizable<Pressure>,
+        IDimensionAccessible,
+        IValueAccessible<PressureUnits>,
+        IDuplicatable<Pressure>,
+        IBinaryCompositeTransposable<Pressure, QuotientUnit<Force, ForceUnits, Area, AreaUnits>>,
+        IExponentiable<Pressure, PressureUnits>,
+        ILinearUnit<Pressure, PressureUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Pa = 0;
+        public const char SYMBOL = 'P';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<PressureUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { PressureUnits.Pascal, 1.0 },
+            { PressureUnits.Hectopascal, 1e2 },
+            { PressureUnits.Kilopascal, 1e3 },
+            { PressureUnits.Megapascal, 1e6 },
+            { PressureUnits.Gigapascal, 1e9 },
+            { PressureUnits.Bar, 1e5 },
+            { PressureUnits.Millibar, 100.0 },
+            { PressureUnits.Barye, 0.1 },
+
+            // Atmospheric & Standard Units
+            { PressureUnits.Atmosphere_Standard, 101325.0 },
+            { PressureUnits.Atmosphere_Technical, 98066.5 }, // 1 kgf/cm²
+
+            // Manometric Units (Liquid Head Column at Standard Conditions)
+            { PressureUnits.Torr, 101325.0 / 760.0 },         // ~133.32236842105263 Pa
+            { PressureUnits.Mercury_Millimeter, 133.322387415 }, // 1 mmHg at 0°C
+            { PressureUnits.Mercury_Inch, 3386.38815789 },     // 1 inHg at 0°C
+            { PressureUnits.Water_Centimeter, 98.0665 },        // 1 cmH₂O at 4°C
+            { PressureUnits.Water_Millimeter, 9.80665 },        // 1 mmH₂O at 4°C
+            { PressureUnits.Water_Inch, 249.088908333 },        // 1 inH₂O at 4°C
+            { PressureUnits.Water_Foot, 2989.0669 },            // 1 ftH₂O at 4°C
+
+            // Imperial & US Customary Units
+            { PressureUnits.PoundPerSquareInch, 6894.757293168361 },
+            { PressureUnits.PoundPerSquareFoot, 47.88025898033584 },
+            { PressureUnits.KipPerSquareInch, 6894757.293168361 },  // 1,000 psi
+            { PressureUnits.OuncePerSquareInch, 430.9223308230225 },
+            { PressureUnits.PoundalPerSquareFoot, 1.4881639435698514 },
+            { PressureUnits.LongTonPerSquareInch, 15444256.3072033 }, // 2,240 lbf/in²
+            { PressureUnits.ShortTonPerSquareInch, 13789514.58633672 }, // 2,000 lbf/in²
+
+            // Theoretical & Atomic Units
+            { PressureUnits.PlanckPressure, 4.63309e113 },       // c^7 / (hbar * G^2) (~4.63309 x 10^113 Pa)
+            { PressureUnits.AtomicPressure, 2.9421015696686e13 } // E_h / a_0^3 (~2.9421 x 10^13 Pa)
+        };
+
+        public static PressureUnits BaseScale => PressureUnits.Pascal;
+        public (double Magnitude, PressureUnits Scale, int ScaleOrdinal) Normalized => (_Pa, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, PressureUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, PressureUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Pressure() => _Pa = 0;
+        public Pressure(Pressure instance) => this = instance;
+        public Pressure(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Pa = magnitude;
+        }
+        public Pressure(double magnitude, PressureUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Pa = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Pressure Initialize() => new();
+        public static Pressure Create(Pressure instance) => new(instance);
+        public static Pressure Create(double magnitude) => new(magnitude);
+        public static Pressure Create(double magnitude, PressureUnits scale) => new(magnitude, scale);
+
+        public Pressure Duplicate() => new(this);
+        public bool Equals(Pressure other) => _Pa == other._Pa;
+
+        public Pressure Convert(PressureUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(PressureUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Pressure Normalize()
+        {
+            Original = (_Pa, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Pressure, PressureUnits> Squared() => this * this;
+        public UnitCubed<Pressure, PressureUnits> Cubed() => this * this * this;
+        public HyperUnit<Pressure, PressureUnits> Pow(int exp)
+            => new HyperUnit<Pressure, PressureUnits>(Math.Pow(_Pa, exp)).SetDimension(exp);
+
+        public QuotientUnit<Force, ForceUnits, Area, AreaUnits> ToComposite()
+            => new QuotientUnit<Force, ForceUnits, Area, AreaUnits>(_Pa).SetScales(ForceUnits.Newton, AreaUnits.SquareMeter);
+        public static Pressure FromComposite(QuotientUnit<Force, ForceUnits, Area, AreaUnits> composite)
+            => composite.Original.Scale1 == ForceUnits.Newton && composite.Original.Scale2 == AreaUnits.SquareMeter ?
+            new(composite.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Pressure l, Pressure r) => l.Equals(r);
+        public static bool operator !=(Pressure l, Pressure r) => !l.Equals(r);
+        public static bool operator <(Pressure l, Pressure r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Pressure l, Pressure r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Pressure l, Pressure r) => l < r || l == r;
+        public static bool operator >=(Pressure l, Pressure r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Pressure operator +(Pressure l, Pressure r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Pressure operator -(Pressure l, Pressure r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Pressure operator *(Pressure l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Pressure operator *(double l, Pressure r) => r * l;
+        public static Pressure operator /(Pressure l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Pressure, PressureUnits> operator *(Pressure l, Pressure r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Pressure l, Pressure r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+    }
+
+    /// <summary>
+    /// Represents a one-dimensional translational momentum and impulse physical measurement structure supporting multi-scale unit conversions, binary composite transposition, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Momentum"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to manage linear momentum and mechanical impulse quantities represented by the standard symbol <see cref="SYMBOL"/> (p).
+    /// </para>
+    /// <para>
+    /// It maintains a momentum dimension of 1 and normalizes values relative to the SI base unit (<see cref="MomentumUnits.NewtonPerSecond"/>). 
+    /// The structure provides scale conversion pipelines across SI and metric systems (N·s, g·cm/s, dyn·s, t·m/s), imperial and customary units (lb·ft/s, lbf·s, pdl·s, slug·ft/s, oz·in/s), high-energy relativistic and astronomical scales (eV/c to TeV/c, M☉·AU/yr), and theoretical physics domains (Planck momentum, atomic momentum). 
+    /// It supports bi-directional binary composite transposition with impulse dynamics (J = F * t via <see cref="ProductUnit{T1, E1, T2, E2}"/> mapping <see cref="Force"/> and <see cref="Time"/>), relational comparison operators, linear arithmetic, and higher-order dimensional exponentiation (p², p³, and pⁿ).
+    /// </para>
+    /// </remarks>
+    public struct Momentum :
+        IInitializable<Momentum>, IInitializable<Momentum, double>, IInitializable<Momentum, double, MomentumUnits>,
+        IScaleMappable<MomentumUnits>, IScaleConvertible<Momentum, MomentumUnits>,
+        INormalized<MomentumUnits>, INormalizable<Momentum>,
+        IDimensionAccessible,
+        IValueAccessible<MomentumUnits>,
+        IDuplicatable<Momentum>,
+        IBinaryCompositeTransposable<Momentum, ProductUnit<Force, ForceUnits, Time, TimeUnits>>,
+        IExponentiable<Momentum, MomentumUnits>,
+        ILinearUnit<Momentum, MomentumUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Nps;
+        public const char SYMBOL = 'p';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<MomentumUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { MomentumUnits.NewtonPerSecond, 1.0 },                   // Equivalent to 1 N·s or 1 kg·m/s
+            { MomentumUnits.Gram_Centimeter_PerSecond, 1e-5 },         // 1 g·cm/s = 10^-5 N·s
+            { MomentumUnits.DyneSecond, 1e-5 },                        // 1 dyn·s = 10^-5 N·s
+            { MomentumUnits.Tonne_Meter_PerSecond, 1000.0 },           // 1 t·m/s = 1,000 N·s
+
+            // Imperial & US Customary Units
+            { MomentumUnits.Pound_Foot_PerSecond, 0.138254954376 },    // 1 lb·ft/s
+            { MomentumUnits.Pound_ForceS_econd, 4.4482216152605 },     // 1 lbf·s
+            { MomentumUnits.Poundal_Second, 0.138254954376 },          // 1 pdl·s
+            { MomentumUnits.Slug_Foot_PerSecond, 4.4482216152605 },    // 1 slug·ft/s
+            { MomentumUnits.Ounce_Inch_PerSecond, 0.0007199737207083 },// 1 oz·in/s
+
+            // High-Energy Particle Physics & Astronomy
+            { MomentumUnits.Electronvolt_Per_C, 5.34428599268e-28 },
+            { MomentumUnits.KiloElectronvolt_Per_C, 5.34428599268e-25 },
+            { MomentumUnits.MegaElectronvolt_Per_C, 5.34428599268e-22 },
+            { MomentumUnits.GigaElectronvolt_Per_C, 5.34428599268e-19 },
+            { MomentumUnits.TeraElectronvolt_Per_C, 5.34428599268e-16 },
+            { MomentumUnits.SolarMass_AstronomicalUnit_PerYear, 9.4705503816e38 }, // M_sun * AU / yr
+
+            // Theoretical & Atomic Units
+            { MomentumUnits.PlanckMomentum, 6.52485 },                 // m_P * c (~6.52485 N·s)
+            { MomentumUnits.AtomicMomentum, 1.99285191410e-24 }        // hbar / a_0 (~1.99285 x 10^-24 N·s)
+        };
+
+        public static MomentumUnits BaseScale => MomentumUnits.NewtonPerSecond;
+        public (double Magnitude, MomentumUnits Scale, int ScaleOrdinal) Normalized => (_Nps, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, MomentumUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, MomentumUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Momentum() => _Nps = 0;
+        public Momentum(Momentum instance) => this = instance;
+        public Momentum(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Nps = magnitude;
+        }
+        public Momentum(double magnitude, MomentumUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Nps = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Momentum Initialize() => new();
+        public static Momentum Create(Momentum instance) => new(instance);
+        public static Momentum Create(double magnitude) => new(magnitude);
+        public static Momentum Create(double magnitude, MomentumUnits scale) => new(magnitude, scale);
+
+        public Momentum Duplicate() => new(this);
+        public bool Equals(Momentum other) => _Nps == other._Nps;
+
+        public Momentum Convert(MomentumUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(MomentumUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Momentum Normalize()
+        {
+            Original = (_Nps, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Momentum, MomentumUnits> Squared() => this * this;
+        public UnitCubed<Momentum, MomentumUnits> Cubed() => this * this * this;
+        public HyperUnit<Momentum, MomentumUnits> Pow(int exp)
+            => new HyperUnit<Momentum, MomentumUnits>(Math.Pow(_Nps, exp)).SetDimension(exp);
+
+        public ProductUnit<Force, ForceUnits, Time, TimeUnits> ToComposite()
+            => new ProductUnit<Force, ForceUnits, Time, TimeUnits>(_Nps).SetScales(ForceUnits.Newton, TimeUnits.Second);
+        public static Momentum FromComposite(ProductUnit<Force, ForceUnits, Time, TimeUnits> comp)
+            => comp.Original.Scale1 == ForceUnits.Newton && comp.Original.Scale2 == TimeUnits.Second ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Momentum l, Momentum r) => l.Equals(r);
+        public static bool operator !=(Momentum l, Momentum r) => !l.Equals(r);
+        public static bool operator <(Momentum l, Momentum r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Momentum l, Momentum r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Momentum l, Momentum r) => l < r || l == r;
+        public static bool operator >=(Momentum l, Momentum r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Momentum operator +(Momentum l, Momentum r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Momentum operator -(Momentum l, Momentum r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Momentum operator *(Momentum l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Momentum operator *(double l, Momentum r) => r * l;
+        public static Momentum operator /(Momentum l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Momentum, MomentumUnits> operator *(Momentum l, Momentum r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Momentum l, Momentum r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+    }
 }
