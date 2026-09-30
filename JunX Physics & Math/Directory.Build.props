@@ -1,0 +1,15 @@
+<Project>
+  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
+  <PropertyGroup>
+    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="JunX.Mathematics.Geometry.Length" Alias="Distance"/>
+
+    <Using Include="JunX.Physics.ClassicalMechanics.Force" Alias="Weight"/>
+    <Using Include="JunX.Physics.ClassicalMechanics.Energy" Alias="Work"/>
+    <Using Include="JunX.Physics.ClassicalMechanics.Energy" Alias="Heat"/>
+    
+  </ItemGroup>
+</Project>
