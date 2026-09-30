@@ -377,7 +377,7 @@ namespace JunX.Physics.ClassicalMechanics
         IValueAccessible<PowerUnits>,
         IDuplicatable<Power>,
         IBinaryCompositeTransposable<Power, QuotientUnit<Energy, EnergyUnits, Time, TimeUnits>>,
-        IExponentiable<UnitSquared<Power, PowerUnits>, UnitCubed<Power, PowerUnits>, HyperUnit<Power, PowerUnits>>,
+        IExponentiable<Power, PowerUnits>,
         ILinearUnit<Power, PowerUnits>,
         ICompositeUnit
     {

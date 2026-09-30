@@ -210,9 +210,20 @@ namespace JunX
         T2 Cubed();
         T3 Pow(int n);
     }
+    public interface IExponentiable<Str, En>
+        where En : Enum
+        where Str : struct, IDimensionAccessible,
+            IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+            INormalized<En>, INormalizable<Str>,
+            IScaleConvertible<Str, En>, IValueAccessible<En>
+    {
+        UnitSquared<Str, En> Squared();
+        UnitCubed<Str, En> Cubed();
+        HyperUnit<Str, En> Pow(int exp);
+    }
     #endregion
 
-    #region DIMENSION ACCESSIBILITY
+        #region DIMENSION ACCESSIBILITY
     public interface IDimensionAccessible
     {
         int Dimension { get; }
