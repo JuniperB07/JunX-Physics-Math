@@ -136,4 +136,39 @@ namespace JunX.Physics.ClassicalMechanics
         PlanckMomentum,
         AtomicMomentum
     }
+
+    public enum AngularMomentumUnits
+    {
+        Joule_Second,
+        Newton_Meter_Second,
+        Gram_CentimeterSquared_PerSecond,
+        Erg_Second,
+        Pound_SquareFoot_PerSecond,
+        PoundForce_Foot_Second,
+        Slug_SquareFoot_PerSecond,
+        Poundal_Foot_Second,
+        AtomicAngularMomentum,
+        Electronvolt_Second,
+        SolarMass_AstronomicalUnitSquared_PerYear,
+        GeometrizedMassSquared
+    }
+
+    public enum TorqueUnits
+    {
+        Newton_Meter,
+        Millinewton_Meter,
+        Kilonewton_Meter,
+        Meganewton_Meter,
+        Dyne_Centimeter,
+        KilogramForce_Meter,
+        GramForce_Centimeter,
+        PoundForce_Foot,
+        PoundForce_Inch,
+        OunceForce_Inch,
+        Kip_Foot,
+        Kip_Inch,
+        Poundal_Foot,
+        PlanckTorque,
+        AtomicTorque
+    }
 }

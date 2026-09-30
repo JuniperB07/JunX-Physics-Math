@@ -836,4 +836,308 @@ namespace JunX.Physics.ClassicalMechanics
         #endregion
 
     }
+
+    /// <summary>
+    /// Represents a one-dimensional angular momentum and physical action structure supporting multi-scale unit conversions, binary composite transposition, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="AngularMomentum"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to manage rotational momentum and physical action quantities represented by the standard symbol <see cref="SYMBOL"/> (L).
+    /// </para>
+    /// <para>
+    /// It maintains an angular momentum dimension of 1 and normalizes values relative to the SI base unit (<see cref="AngularMomentumUnits.Joule_Second"/>). 
+    /// The structure provides scale conversion pipelines across SI and metric systems (J·s, N·m·s, g·cm²/s, erg·s), imperial and customary units (lb·ft²/s, lbf·ft·s, slug·ft²/s, pdl·ft·s), atomic and quantum scales (reduced Planck constant ℏ, eV·s), and astronomical or relativistic domains (M☉·AU²/yr, G·M☉²/c). 
+    /// It supports bi-directional binary composite transposition with energy-time action dynamics (S = E * t via <see cref="ProductUnit{T1, E1, T2, E2}"/> mapping <see cref="Energy"/> and <see cref="Time"/>), relational comparison operators, linear arithmetic, and higher-order dimensional exponentiation (L², L³, and Lⁿ).
+    /// </para>
+    /// </remarks>
+    public struct AngularMomentum :
+        IInitializable<AngularMomentum>, IInitializable<AngularMomentum, double>, IInitializable<AngularMomentum, double, AngularMomentumUnits>,
+        IScaleMappable<AngularMomentumUnits>, IScaleConvertible<AngularMomentum, AngularMomentumUnits>,
+        INormalized<AngularMomentumUnits>, INormalizable<AngularMomentum>,
+        IDimensionAccessible,
+        IValueAccessible<AngularMomentumUnits>,
+        IDuplicatable<AngularMomentum>,
+        IBinaryCompositeTransposable<AngularMomentum, ProductUnit<Energy, EnergyUnits, Time, TimeUnits>>,
+        IExponentiable<AngularMomentum, AngularMomentumUnits>,
+        ILinearUnit<AngularMomentum, AngularMomentumUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Js;
+        public const char SYMBOL = 'L';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<AngularMomentumUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { AngularMomentumUnits.Joule_Second, 1.0 },
+            { AngularMomentumUnits.Newton_Meter_Second, 1.0 },                   // 1 N·m·s = 1 J·s
+            { AngularMomentumUnits.Gram_CentimeterSquared_PerSecond, 1e-7 },     // 1 g·cm²/s = 10^-7 J·s
+            { AngularMomentumUnits.Erg_Second, 1e-7 },                            // 1 erg·s = 10^-7 J·s
+
+            // Imperial & US Customary Units
+            { AngularMomentumUnits.Pound_SquareFoot_PerSecond, 0.0421401100938048 }, // 1 lb·ft²/s
+            { AngularMomentumUnits.PoundForce_Foot_Second, 1.3558179483314004 },    // 1 lbf·ft·s
+            { AngularMomentumUnits.Slug_SquareFoot_PerSecond, 1.3558179483314004 }, // 1 slug·ft²/s
+            { AngularMomentumUnits.Poundal_Foot_Second, 0.0421401100938048 },       // 1 pdl·ft·s
+
+            // Atomic & Particle Physics
+            { AngularMomentumUnits.AtomicAngularMomentum, 1.054571817e-34 },       // Reduced Planck constant (hbar)
+            { AngularMomentumUnits.Electronvolt_Second, 1.602176634e-19 },        // 1 eV·s
+
+            // Astronomical & Relativistic Units
+            { AngularMomentumUnits.SolarMass_AstronomicalUnitSquared_PerYear, 1.416766e50 }, // M_sun * AU² / yr
+            { AngularMomentumUnits.GeometrizedMassSquared, 8.81057e37 }                      // G * M_sun² / c
+        };
+
+        public static AngularMomentumUnits BaseScale => AngularMomentumUnits.Joule_Second;
+        public (double Magnitude, AngularMomentumUnits Scale, int ScaleOrdinal) Normalized => (_Js, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, AngularMomentumUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, AngularMomentumUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public AngularMomentum() => _Js = 0;
+        public AngularMomentum(AngularMomentum instance) => this = instance;
+        public AngularMomentum(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Js = magnitude;
+        }
+        public AngularMomentum(double magnitude, AngularMomentumUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Js = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static AngularMomentum Initialize() => new();
+        public static AngularMomentum Create(AngularMomentum instance) => new(instance);
+        public static AngularMomentum Create(double magnitude) => new(magnitude);
+        public static AngularMomentum Create(double magnitude, AngularMomentumUnits scale) => new(magnitude, scale);
+
+        public AngularMomentum Duplicate() => new(this);
+        public bool Equals(AngularMomentum other) => _Js == other._Js;
+
+        public AngularMomentum Convert(AngularMomentumUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(AngularMomentumUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public AngularMomentum Normalize()
+        {
+            Original = (_Js, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<AngularMomentum, AngularMomentumUnits> Squared() => this * this;
+        public UnitCubed<AngularMomentum, AngularMomentumUnits> Cubed() => this * this * this;
+        public HyperUnit<AngularMomentum, AngularMomentumUnits> Pow(int exp)
+            => new HyperUnit<AngularMomentum, AngularMomentumUnits>(Math.Pow(_Js, exp)).SetDimension(exp);
+
+        public ProductUnit<Energy, EnergyUnits, Time, TimeUnits> ToComposite()
+            => new ProductUnit<Energy, EnergyUnits, Time, TimeUnits>(_Js).SetScales(EnergyUnits.Joule, TimeUnits.Second);
+        public static AngularMomentum FromComposite(ProductUnit<Energy, EnergyUnits, Time, TimeUnits> comp)
+            => comp.Original.Scale1 == EnergyUnits.Joule && comp.Original.Scale2 == TimeUnits.Second ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(AngularMomentum l, AngularMomentum r) => l.Equals(r);
+        public static bool operator !=(AngularMomentum l, AngularMomentum r) => !l.Equals(r);
+        public static bool operator <(AngularMomentum l, AngularMomentum r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(AngularMomentum l, AngularMomentum r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(AngularMomentum l, AngularMomentum r) => l < r || l == r;
+        public static bool operator >=(AngularMomentum l, AngularMomentum r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static AngularMomentum operator +(AngularMomentum l, AngularMomentum r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static AngularMomentum operator -(AngularMomentum l, AngularMomentum r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static AngularMomentum operator *(AngularMomentum l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static AngularMomentum operator *(double l, AngularMomentum r) => r * l;
+        public static AngularMomentum operator /(AngularMomentum l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<AngularMomentum, AngularMomentumUnits> operator *(AngularMomentum l, AngularMomentum r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(AngularMomentum l, AngularMomentum r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+    }
+
+    /// <summary>
+    /// Represents a one-dimensional rotational force and moment physical measurement structure supporting multi-system scale conversions, binary composite transposition, linear arithmetic, and higher-order dimensional exponentiation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Torque"/> implements foundational physical measurement contracts including <see cref="ILinearUnit{TSelf, TEnum}"/>, <see cref="INormalizable{TSelf}"/>, 
+    /// <see cref="IBinaryCompositeTransposable{TSelf, TTransposed}"/>, <see cref="ICompositeUnit"/>, and <see cref="IExponentiable{TSelf, TEnum}"/> to manage moment of force and rotational vector torque quantities represented by the standard symbol <see cref="SYMBOL"/> (τ).
+    /// </para>
+    /// <para>
+    /// It maintains a torque dimension of 1 and normalizes values relative to the SI base unit (<see cref="TorqueUnits.Newton_Meter"/>). 
+    /// The structure provides scale conversion pipelines across SI and CGS systems (N·m, mN·m, kN·m, MN·m, dyn·cm), gravitational metric units (kgf·m, gf·cm), imperial and US customary scales (lbf·ft, lbf·in, ozf·in, kip·ft, kip·in, pdl·ft), and theoretical/atomic domains (Planck torque, atomic unit of torque/Hartree energy). 
+    /// It supports bi-directional binary composite transposition with moment arm mechanics (τ = F * r via <see cref="ProductUnit{T1, E1, T2, E2}"/> mapping <see cref="Force"/> and <see cref="Length"/>), relational comparison operators, linear arithmetic, and higher-order dimensional exponentiation (τ², τ³, and τⁿ).
+    /// </para>
+    /// </remarks>
+    public struct Torque :
+        IInitializable<Torque>, IInitializable<Torque, double>, IInitializable<Torque, double, TorqueUnits>,
+        IScaleMappable<TorqueUnits>, IScaleConvertible<Torque, TorqueUnits>,
+        INormalized<TorqueUnits>, INormalizable<Torque>,
+        IDimensionAccessible,
+        IValueAccessible<TorqueUnits>,
+        IDuplicatable<Torque>,
+        IBinaryCompositeTransposable<Torque, ProductUnit<Force, ForceUnits, Length, LengthUnits>>,
+        IExponentiable<Torque, TorqueUnits>,
+        ILinearUnit<Torque, TorqueUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Nm;
+        public const char SYMBOL = 'τ';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<TorqueUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { TorqueUnits.Newton_Meter, 1.0 },
+            { TorqueUnits.Millinewton_Meter, 1e-3 },
+            { TorqueUnits.Kilonewton_Meter, 1e3 },
+            { TorqueUnits.Meganewton_Meter, 1e6 },
+            { TorqueUnits.Dyne_Centimeter, 1e-7 },
+
+            // Gravitational Metric Units
+            { TorqueUnits.KilogramForce_Meter, 9.80665 },
+            { TorqueUnits.GramForce_Centimeter, 0.0000980665 },
+
+            // Imperial & US Customary Units
+            { TorqueUnits.PoundForce_Foot, 1.3558179483314004 },
+            { TorqueUnits.PoundForce_Inch, 0.1129848290276167 },
+            { TorqueUnits.OunceForce_Inch, 0.0070615518142260435 },
+            { TorqueUnits.Kip_Foot, 1355.8179483314004 },
+            { TorqueUnits.Kip_Inch, 112.9848290276167 },
+            { TorqueUnits.Poundal_Foot, 0.0421401100938048 },
+
+            // Theoretical & Atomic Units
+            { TorqueUnits.PlanckTorque, 1.9561e9 },                  // Equivalent to Planck Energy (~1.9561 x 10^9 N·m)
+            { TorqueUnits.AtomicTorque, 4.3597447222071e-18 }        // Atomic unit of energy/torque (Hartree energy)
+        };
+
+        public static TorqueUnits BaseScale => TorqueUnits.Newton_Meter;
+        public (double Magnitude, TorqueUnits Scale, int ScaleOrdinal) Normalized => (_Nm, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, TorqueUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, TorqueUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Torque() => _Nm = 0;
+        public Torque(Torque instance) => this = instance;
+        public Torque(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Nm = magnitude;
+        }
+        public Torque(double magnitude, TorqueUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Nm = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Torque Initialize() => new();
+        public static Torque Create(Torque instance) => new(instance);
+        public static Torque Create(double magnitude) => new(magnitude);
+        public static Torque Create(double magnitude, TorqueUnits scale) => new(magnitude, scale);
+
+        public Torque Duplicate() => new(this);
+        public bool Equals(Torque other) => _Nm == other._Nm;
+
+        public Torque Convert(TorqueUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(TorqueUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Torque Normalize()
+        {
+            Original = (_Nm, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public UnitSquared<Torque, TorqueUnits> Squared() => this * this;
+        public UnitCubed<Torque, TorqueUnits> Cubed() => this * this * this;
+        public HyperUnit<Torque, TorqueUnits> Pow(int exp)
+            => new HyperUnit<Torque, TorqueUnits>(Math.Pow(_Nm, exp)).SetDimension(exp);
+
+        public ProductUnit<Force, ForceUnits, Length, LengthUnits> ToComposite()
+            => new ProductUnit<Force, ForceUnits, Length, LengthUnits>(_Nm).SetScales(ForceUnits.Newton, LengthUnits.Meter);
+        public static Torque FromComposite(ProductUnit<Force, ForceUnits, Length, LengthUnits> comp)
+            => comp.Original.Scale1 == ForceUnits.Newton && comp.Original.Scale2 == LengthUnits.Meter ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Torque l, Torque r) => l.Equals(r);
+        public static bool operator !=(Torque l, Torque r) => !l.Equals(r);
+        public static bool operator <(Torque l, Torque r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Torque l, Torque r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Torque l, Torque r) => l < r || l == r;
+        public static bool operator >=(Torque l, Torque r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Torque operator +(Torque l, Torque r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Torque operator -(Torque l, Torque r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Torque operator *(Torque l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Torque operator *(double l, Torque r) => r * l;
+        public static Torque operator /(Torque l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Torque, TorqueUnits> operator *(Torque l, Torque r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Torque l, Torque r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
 }
