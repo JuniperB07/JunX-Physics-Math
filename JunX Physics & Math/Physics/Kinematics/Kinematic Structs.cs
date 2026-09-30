@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Numerics;
+using JunX.Physics.ClassicalMechanics;
 
 namespace JunX.Physics.Kinematics
 {
@@ -358,6 +359,8 @@ namespace JunX.Physics.Kinematics
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         public static Length operator *(UnitSquared<Time, TimeUnits> l, Acceleration r) => r * l;
         public static UnitSquared<Velocity, VelocityUnits> operator *(Acceleration l, Length r) => r * l;
+
+        public static Force operator *(Acceleration l, Mass r) => r * l;
         #endregion
     }
 

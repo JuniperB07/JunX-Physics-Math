@@ -1,4 +1,5 @@
 ﻿using JunX.Mathematics.Geometry;
+using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualBasic;
@@ -343,7 +344,13 @@ namespace JunX.Physics.BaseUnits
         public static double operator /(Mass l, Mass r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Force operator *(Mass l, Acceleration r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        #endregion
     }
+
 
     /// <summary>
     /// Represents a one-dimensional electric current unit structure supporting scale conversions, normalization, linear arithmetic, and higher-order dimensional exponentiation.

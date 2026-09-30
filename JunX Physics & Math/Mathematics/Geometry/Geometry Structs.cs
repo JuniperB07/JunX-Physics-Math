@@ -153,6 +153,8 @@ namespace JunX.Mathematics.Geometry
         #endregion
 
         #region DERIVATIONS
+        public static Length Derive((double Point1, double Point2) x, (double Point1, double Point2) y)
+            => new(Math.Sqrt(Math.Pow(x.Point2 - x.Point2, 2) + (Math.Pow(y.Point2 - y.Point1, 2)));
         public static Length Derive(Velocity velocity, Time time) => velocity * time;
         public static Length Derive(Acceleration acceleration, UnitSquared<Time, TimeUnits> timeSquared) => acceleration * timeSquared;
 
