@@ -223,7 +223,7 @@ namespace JunX
     }
     #endregion
 
-        #region DIMENSION ACCESSIBILITY
+    #region DIMENSION ACCESSIBILITY
     public interface IDimensionAccessible
     {
         int Dimension { get; }
