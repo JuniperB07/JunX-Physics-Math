@@ -127,4 +127,19 @@ namespace JunX.Physics.Electromagnetism
         AtomicFluxDensity,
         PlanckMagneticField
     }
+
+    public enum MagneticFluxStrengthUnits
+    {
+        Ampere_PerMeter,
+        AmpereTurn_PerMeter,
+        Kiloampere_PerMeter,
+        Milliampere_PerMeter,
+        Oersted,
+        Gilberts_PerCentimeter,
+        Statoersted,
+        AmpereTurn_PerInch,
+        AmpereTurn_PerFoot,
+        AtomicMagneticFieldStrength,
+        PlanckMagneticFieldStrength
+    }
 }

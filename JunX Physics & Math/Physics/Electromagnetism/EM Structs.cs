@@ -2,6 +2,7 @@
 using JunX.Physics.BaseUnits;
 using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -1115,6 +1116,142 @@ namespace JunX.Physics.Electromagnetism
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
 
         public static double operator /(MagneticFluxDensity l, MagneticFluxDensity r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct MagneticFluxStrength :
+        IInitializable<MagneticFluxStrength>, IInitializable<MagneticFluxStrength, double>, IInitializable<MagneticFluxStrength, double, MagneticFluxStrengthUnits>,
+        IScaleMappable<MagneticFluxStrengthUnits>, IScaleConvertible<MagneticFluxStrength, MagneticFluxStrengthUnits>,
+        INormalized<MagneticFluxStrengthUnits>, INormalizable<MagneticFluxStrength>,
+        IDimensionAccessible,
+        IValueAccessible<MagneticFluxStrengthUnits>,
+        IDuplicatable<MagneticFluxStrength>,
+        IEquatable<MagneticFluxStrength>,
+        IBinaryCompositeTransposable<MagneticFluxStrength, QuotientUnit<Current, CurrentUnits, Length, LengthUnits>>,
+        IExponentiable<MagneticFluxStrength, MagneticFluxStrengthUnits>,
+        ILinearUnit<MagneticFluxStrength, MagneticFluxStrengthUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Apm = 0;
+        public const char SYMBOL = 'H';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<MagneticFluxStrengthUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { MagneticFluxStrengthUnits.Ampere_PerMeter, 1.0 },
+            { MagneticFluxStrengthUnits.AmpereTurn_PerMeter, 1.0 },              // 1 At/m = 1 A/m
+            { MagneticFluxStrengthUnits.Kiloampere_PerMeter, 1e3 },
+            { MagneticFluxStrengthUnits.Milliampere_PerMeter, 1e-3 },
+
+            // CGS & Electromagnetic System
+            { MagneticFluxStrengthUnits.Oersted, 79.57747154594767 },             // 1000 / (4 * pi) A/m (~79.5775 A/m)
+            { MagneticFluxStrengthUnits.Gilberts_PerCentimeter, 79.57747154594767 },// 1 Gb/cm = 1 Oe (~79.5775 A/m)
+            { MagneticFluxStrengthUnits.Statoersted, 2.3855753860477e13 },        // (1000 * c) / (4 * pi * 10^6) A/m (~2.38558 x 10^13 A/m)
+
+            // Imperial & Engineering Units
+            { MagneticFluxStrengthUnits.AmpereTurn_PerInch, 39.37007874015748 }, // 1 / 0.0254 A/m (~39.3701 A/m)
+            { MagneticFluxStrengthUnits.AmpereTurn_PerFoot, 3.280839895013123 },  // 1 / 0.3048 A/m (~3.28084 A/m)
+
+            // Atomic & Theoretical Units
+            { MagneticFluxStrengthUnits.AtomicMagneticFieldStrength, 1.87088647e8 }, // e / (4pi * eps_0 * a_0^2 * c * mu_0) (~1.87089 x 10^8 A/m)
+            { MagneticFluxStrengthUnits.PlanckMagneticFieldStrength, 4.0583e59 }    // sqrt(c^9 / (hbar * G^2 * mu_0)) (~4.0583 x 10^59 A/m)
+        };
+
+        public static MagneticFluxStrengthUnits BaseScale => MagneticFluxStrengthUnits.Ampere_PerMeter;
+        public (double Magnitude, MagneticFluxStrengthUnits Scale, int ScaleOrdinal) Normalized => new(_Apm, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, MagneticFluxStrengthUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, MagneticFluxStrengthUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public MagneticFluxStrength() { }
+        public MagneticFluxStrength(MagneticFluxStrength instance) => this = instance;
+        public MagneticFluxStrength(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Apm = magnitude;
+        }
+        public MagneticFluxStrength(double magnitude, MagneticFluxStrengthUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Apm = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static MagneticFluxStrength Initialize() => new();
+        public static MagneticFluxStrength Create(MagneticFluxStrength instance) => new(instance);
+        public static MagneticFluxStrength Create(double magnitude) => new(magnitude);
+        public static MagneticFluxStrength Create(double magnitude, MagneticFluxStrengthUnits scale) => new(magnitude, scale);
+
+        public MagneticFluxStrength Duplicate() => new(this);
+        public bool Equals(MagneticFluxStrength other) => _Apm == other._Apm;
+
+        public MagneticFluxStrength Convert(MagneticFluxStrengthUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(MagneticFluxStrengthUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public MagneticFluxStrength Normalize()
+        {
+            Original = (_Apm, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public QuotientUnit<Current, CurrentUnits, Length, LengthUnits> ToComposite()
+            => new QuotientUnit<Current, CurrentUnits, Length, LengthUnits>(_Apm).SetScales(CurrentUnits.Ampere, LengthUnits.Meter);
+        public static MagneticFluxStrength FromComposite(QuotientUnit<Current, CurrentUnits, Length, LengthUnits> comp)
+            => comp.Original.Scale1 == CurrentUnits.Ampere && comp.Original.Scale2 == LengthUnits.Meter ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public UnitSquared<MagneticFluxStrength, MagneticFluxStrengthUnits> Squared() => this * this;
+        public UnitCubed<MagneticFluxStrength, MagneticFluxStrengthUnits> Cubed() => this * this * this;
+        public HyperUnit<MagneticFluxStrength, MagneticFluxStrengthUnits> Pow(int exp)
+            => new HyperUnit<MagneticFluxStrength, MagneticFluxStrengthUnits>(Math.Pow(_Apm, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(MagneticFluxStrength l, MagneticFluxStrength r) => l.Equals(r);
+        public static bool operator !=(MagneticFluxStrength l, MagneticFluxStrength r) => !l.Equals(r);
+        public static bool operator <(MagneticFluxStrength l, MagneticFluxStrength r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(MagneticFluxStrength l, MagneticFluxStrength r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(MagneticFluxStrength l, MagneticFluxStrength r) => l < r || l == r;
+        public static bool operator >=(MagneticFluxStrength l, MagneticFluxStrength r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static MagneticFluxStrength operator +(MagneticFluxStrength l, MagneticFluxStrength r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static MagneticFluxStrength operator -(MagneticFluxStrength l, MagneticFluxStrength r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static MagneticFluxStrength operator *(MagneticFluxStrength l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static MagneticFluxStrength operator *(double l, MagneticFluxStrength r) => r * l;
+        public static MagneticFluxStrength operator /(MagneticFluxStrength l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<MagneticFluxStrength, MagneticFluxStrengthUnits> operator *(MagneticFluxStrength l, MagneticFluxStrength r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(MagneticFluxStrength l, MagneticFluxStrength r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
