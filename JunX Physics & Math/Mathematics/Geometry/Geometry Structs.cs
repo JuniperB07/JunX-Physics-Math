@@ -1,4 +1,5 @@
 ﻿using JunX.Physics.BaseUnits;
+using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
 using System;
 using System.Collections.Generic;
@@ -154,7 +155,7 @@ namespace JunX.Mathematics.Geometry
 
         #region DERIVATIONS
         public static Length Derive((double Point1, double Point2) x, (double Point1, double Point2) y)
-            => new(Math.Sqrt(Math.Pow(x.Point2 - x.Point2, 2) + (Math.Pow(y.Point2 - y.Point1, 2)));
+            => new(Math.Sqrt(Math.Pow(x.Point2 - x.Point2, 2) + (Math.Pow(y.Point2 - y.Point1, 2))));
         public static Length Derive(Velocity velocity, Time time) => velocity * time;
         public static Length Derive(Acceleration acceleration, UnitSquared<Time, TimeUnits> timeSquared) => acceleration * timeSquared;
 
@@ -234,6 +235,15 @@ namespace JunX.Mathematics.Geometry
 
         public static Velocity operator *(Length l, AngularVelocity r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static Force operator /(ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits> l, Length r)
+            => l.Original.Scale1 == MassUnits.Kilogram && l.Original.Scale2 == VelocityUnits.MetersPerSecond ?
+            new(l.Original.Magnitude / r.Normalized.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.NON_NORMALIZED_OPERAND_SCALES);
+        public static Force operator *(ProductUnit<Mass, MassUnits, UnitSquared<AngularVelocity, AngularVelocityUnits>, AngularVelocityUnits> l, Length r)
+            => l.Original.Scale1 == MassUnits.Kilogram ?
+            new(l.Original.Magnitude * r.Normalized.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.NON_NORMALIZED_OPERAND_SCALES);
         #endregion
     }
 

@@ -1,4 +1,5 @@
-﻿using JunX.Mathematics.Geometry;
+﻿using JunX.Mathematics;
+using JunX.Mathematics.Geometry;
 using JunX.Physics.BaseUnits;
 using JunX.Physics.Kinematics;
 using Microsoft.CodeAnalysis;
@@ -139,6 +140,16 @@ namespace JunX.Physics.ClassicalMechanics
 
         #region DERIVATIONS
         public static Force Derive(Mass m, Acceleration a) => m * a;
+        public static Force Derive((Mass Object1, Mass Object2) mass, Length radius)
+        {
+            var unit = (mass.Object1 * mass.Object2).Divide(radius.Squared().ToUnitSquared(), LengthUnits.Meter);
+            return CompositeReductor.Multiply(Constants.GravitationalConstant, unit);
+        }
+
+        public static Force Centripetal(Mass mass, Velocity tangentialVelocity, Length radius)
+            => (mass * tangentialVelocity.Squared()) / radius;
+        public static Force Centripetal(Mass mass, AngularVelocity omega, Length radius)
+            => mass * omega.Squared() * radius;
         #endregion
 
         #region CONDITIONAL OPERATORS

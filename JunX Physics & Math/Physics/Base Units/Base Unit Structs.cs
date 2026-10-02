@@ -348,6 +348,16 @@ namespace JunX.Physics.BaseUnits
         #region CROSS-UNIT OPERATORS
         public static Force operator *(Mass l, Acceleration r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        public static ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits> operator *(Mass l, UnitSquared<Velocity, VelocityUnits> r)
+            => new ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude)
+            .SetScales(MassUnits.Kilogram, VelocityUnits.MetersPerSecond);
+        public static ProductUnit<UnitSquared<Velocity, VelocityUnits>, VelocityUnits, Mass, MassUnits> operator *(UnitSquared<Velocity, VelocityUnits> l, Mass r)
+            => (r * l).Commute();
+        public static ProductUnit<Mass, MassUnits, UnitSquared<AngularVelocity, AngularVelocityUnits>, AngularVelocityUnits> operator *(Mass l, UnitSquared<AngularVelocity, AngularVelocityUnits> r)
+            => new ProductUnit<Mass, MassUnits, UnitSquared<AngularVelocity, AngularVelocityUnits>, AngularVelocityUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude)
+            .SetScales(MassUnits.Kilogram, AngularVelocityUnits.RadiansPerSecond);
+        public static ProductUnit<UnitSquared<AngularVelocity, AngularVelocityUnits>, AngularVelocityUnits, Mass, MassUnits> operator *(UnitSquared<AngularVelocity, AngularVelocityUnits> l, Mass r)
+            => (r * l).Commute();
         #endregion
     }
 

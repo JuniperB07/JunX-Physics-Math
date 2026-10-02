@@ -1,4 +1,6 @@
 ﻿using JunX.Mathematics.Geometry;
+using JunX.Physics.BaseUnits;
+using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
 using System;
 using System.Collections.Generic;
@@ -17,6 +19,14 @@ namespace JunX
         public static readonly Velocity SpeedOfLight = c;
 
         public static readonly Acceleration EarthGravity = new(9.8);
+
+        public static readonly TernaryQuotientUnit<
+            Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>,
+            Force, ForceUnits,
+            UnitSquared<Length, LengthUnits>, LengthUnits,
+            UnitSquared<Mass, MassUnits>, MassUnits> GravitationalConstant
+            = new TernaryQuotientUnit<Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>, Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits, UnitSquared<Mass, MassUnits>, MassUnits>(6.674e-11)
+            .SetScales(ForceUnits.Newton, LengthUnits.Meter, MassUnits.Kilogram);
     }
 
     /// <summary>
@@ -67,6 +77,7 @@ namespace JunX
         public const string INVALID_RECIPROCAL_NUMERATOR = "Reciprocal numerator cannot be negative.";
         public const string NON_ZERO_RECIPROCAL_NUMERATOR = "Reciprocal numerator must be 0.";
         public const string NON_INVERSE_RECIPROCAL = "ReciprocalUnit numerator value is not 1.";
+        public const string NON_NORMALIZED_OPERAND_SCALES = "Scale values of both operands must all be normalized.";
 
         public static string Insufficient_Array_Length(int minimumLength)
             => $"Array length must not be less than {minimumLength}.";
@@ -688,6 +699,23 @@ namespace JunX
 
             double mag = l.Original.Magnitude / r.Magnitude;
             return Str1.Create(mag, r.Scales.Scale1);
+        }
+        public static Str1 Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> l,
+            QuotientUnit<Str3, En3, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {//     A   =   (AB/C) * (C/B)
+            if (r.Original.Scale1Ordinal != l.Scales.Ordinal3 ||
+                r.Original.Scale2Ordinal != l.Scales.Ordinal2)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            return Str1.Create(mag, l.Scales.Scale1);
         }
         public static Str2 Divide<Str1, En1, Str2, En2, Str3, En3>
             (QuotientUnit<Str3, En3, Str1, En1> l,

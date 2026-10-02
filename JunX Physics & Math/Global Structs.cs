@@ -233,7 +233,8 @@ namespace JunX
         ISquareRootable<Str>,
         IEquatable<UnitSquared<Str, En>>,
         IExponentiable<HyperUnit<Str, En>>,
-        IDimensionalUnit
+        IDimensionalUnit,
+        ILinearUnit<UnitSquared<Str, En>, En>
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
@@ -334,6 +335,12 @@ namespace JunX
 
         public HyperUnit<Str, En> ToHyperUnit()
             => new HyperUnit<Str, En>(Original.Magnitude, Original.Scale).SetDimension(Dimension);
+
+        public QuotientUnit<UnitSquared<Str, En>, En, Str2, En2> Divide<Str2, En2>(Str2 unit, En2 scale)
+            where En2 : Enum
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            => new QuotientUnit<UnitSquared<Str, En>, En, Str2, En2>(Normalized.Magnitude / unit.Normalized.Magnitude)
+            .SetScales(Normalized.Scale, scale);
         #endregion
 
         #region OVERRIDES
@@ -455,7 +462,8 @@ namespace JunX
         ICubeRootable<Str>,
         IEquatable<UnitCubed<Str, En>>,
         IExponentiable<HyperUnit<Str, En>>,
-        IDimensionalUnit
+        IDimensionalUnit,
+        ILinearUnit<UnitCubed<Str, En>, En>
 
         where En : Enum
         where Str : struct, IDimensionAccessible,
