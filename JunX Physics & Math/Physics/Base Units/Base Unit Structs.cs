@@ -361,7 +361,6 @@ namespace JunX.Physics.BaseUnits
         #endregion
     }
 
-
     /// <summary>
     /// Represents a one-dimensional electric current unit structure supporting scale conversions, normalization, linear arithmetic, and higher-order dimensional exponentiation.
     /// </summary>
