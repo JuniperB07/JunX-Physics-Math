@@ -82,6 +82,49 @@ namespace JunX.Physics.Electromagnetism
         Centimeter,
         Ampere_Second_PerVolt,
         AtomicCapacitance,
-        PlanckCapacitalce
+        PlanckCapacitance
+    }
+
+    public enum MagneticFluxUnits
+    {
+        Weber,
+        Microweber,
+        Milliweber,
+        Kiloweber,
+        Megaweber,
+        Maxwell,
+        LineOfForce,
+        Kilomaxwell,
+        Statweber,
+        AtomicMagneticFlux,
+        PlanckMagneticFlux
+    }
+
+    public enum InductanceUnits
+    {
+        Henry,
+        Nanohenry,
+        Microhenry,
+        Millihenry,
+        Kilohenry,
+        Abhenry,
+        Stathenry,
+        Centimeter,
+        AtomicInductance,
+        PlanckInductance
+    }
+
+    public enum MagneticFluxDensityUnits
+    {
+        Tesla,
+        Nanotesla,
+        Microtesla,
+        Millitesla,
+        Kilotesla,
+        Gauss,
+        Gamma,
+        Stattesla,
+        AtomicFluxDensity,
+        PlanckMagneticField
     }
 }

@@ -1,10 +1,10 @@
-﻿using JunX.Physics.BaseUnits;
+﻿using JunX.Mathematics.Geometry;
+using JunX.Physics.BaseUnits;
 using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -557,6 +557,564 @@ namespace JunX.Physics.Electromagnetism
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
 
         public static double operator /(ElectricConductance l, ElectricConductance r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct Capacitance :
+        IInitializable<Capacitance>, IInitializable<Capacitance, double>, IInitializable<Capacitance, double, CapacitanceUnits>,
+        IScaleMappable<CapacitanceUnits>, IScaleConvertible<Capacitance, CapacitanceUnits>,
+        INormalized<CapacitanceUnits>, INormalizable<Capacitance>,
+        IDimensionAccessible,
+        IValueAccessible<CapacitanceUnits>,
+        IDuplicatable<Capacitance>,
+        IEquatable<Capacitance>,
+        IBinaryCompositeTransposable<Capacitance, QuotientUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits>>,
+        IExponentiable<Capacitance, CapacitanceUnits>,
+        ILinearUnit<Capacitance, CapacitanceUnits>,
+        ICompositeUnit
+    {
+        private readonly double _F = 0;
+        public const char SYMBOL = 'C';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<CapacitanceUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { CapacitanceUnits.Farad, 1.0 },
+            { CapacitanceUnits.Millifarad, 1e-3 },
+            { CapacitanceUnits.Microfarad, 1e-6 },
+            { CapacitanceUnits.Nanofarad, 1e-9 },
+            { CapacitanceUnits.Picofarad, 1e-12 },
+            { CapacitanceUnits.Femtofarad, 1e-15 },
+            { CapacitanceUnits.Kilofarad, 1e3 },
+
+            // CGS System
+            { CapacitanceUnits.Statfarad, 1.1126500560536184e-12 },   // 10^7 / c^2 F (~1.11265 pF)
+            { CapacitanceUnits.Abfarad, 1e9 },                         // 1 abF = 10^9 F (1 GF)
+            { CapacitanceUnits.Centimeter, 1.1126500560536184e-12 },   // 1 cm of capacitance = 1 statfarad
+
+            // Derived Representation
+            { CapacitanceUnits.Ampere_Second_PerVolt, 1.0 },           // 1 A·s/V = 1 F
+
+            // Atomic & Theoretical Units
+            { CapacitanceUnits.AtomicCapacitance, 1.1126500560536184e-20 }, // 4pi * eps_0 * a_0 (Bohr radius)
+            { CapacitanceUnits.PlanckCapacitance, 1.797800040683692e-46 }    // 4pi * eps_0 * l_P (Planck length)
+        };
+
+        public static CapacitanceUnits BaseScale => CapacitanceUnits.Farad;
+        public (double Magnitude, CapacitanceUnits Scale, int ScaleOrdinal) Normalized => new(_F, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, CapacitanceUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, CapacitanceUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Capacitance() { }
+        public Capacitance(Capacitance instance) => this = instance;
+        public Capacitance(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _F = magnitude;
+        }
+        public Capacitance(double magnitude, CapacitanceUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _F = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Capacitance Initialize() => new();
+        public static Capacitance Create(Capacitance instance) => new(instance);
+        public static Capacitance Create(double magnitude) => new(magnitude);
+        public static Capacitance Create(double magnitude, CapacitanceUnits scale) => new(magnitude, scale);
+
+        public Capacitance Duplicate() => new(this);
+        public bool Equals(Capacitance other) => _F == other._F;
+
+        public Capacitance Convert(CapacitanceUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(CapacitanceUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Capacitance Normalize()
+        {
+            Original = (_F, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public QuotientUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> ToComposite()
+            => new QuotientUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits>(_F).SetScales(ElectricChargeUnits.Coulomb, ElectricPotentialUnits.Volt);
+        public static Capacitance FromComposite(QuotientUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> comp)
+            => comp.Original.Scale1 == ElectricChargeUnits.Coulomb && comp.Original.Scale2 == ElectricPotentialUnits.Volt ?
+            new Capacitance(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        public TernaryQuotientUnit<Numerator<CompositeProduct<Current, Time>>, Current, CurrentUnits, Time, TimeUnits, ElectricPotential, ElectricPotentialUnits> ToAmpereSecondPerVolt()
+            => new TernaryQuotientUnit<Numerator<CompositeProduct<Current, Time>>, Current, CurrentUnits, Time, TimeUnits, ElectricPotential, ElectricPotentialUnits>(_F)
+            .SetScales(CurrentUnits.Ampere, TimeUnits.Second, ElectricPotentialUnits.Volt);
+
+        public UnitSquared<Capacitance, CapacitanceUnits> Squared() => this * this;
+        public UnitCubed<Capacitance, CapacitanceUnits> Cubed() => this * this * this;
+        public HyperUnit<Capacitance, CapacitanceUnits> Pow(int exp)
+            => new HyperUnit<Capacitance, CapacitanceUnits>(Math.Pow(_F, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Capacitance l, Capacitance r) => l.Equals(r);
+        public static bool operator !=(Capacitance l, Capacitance r) => !l.Equals(r);
+        public static bool operator <(Capacitance l, Capacitance r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Capacitance l, Capacitance r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Capacitance l, Capacitance r) => l < r || l == r;
+        public static bool operator >=(Capacitance l, Capacitance r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Capacitance operator +(Capacitance l, Capacitance r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Capacitance operator -(Capacitance l, Capacitance r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Capacitance operator *(Capacitance l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Capacitance operator *(double l, Capacitance r) => r * l;
+        public static Capacitance operator /(Capacitance l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Capacitance, CapacitanceUnits> operator *(Capacitance l, Capacitance r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Capacitance l, Capacitance r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct MagneticFlux :
+        IInitializable<MagneticFlux>, IInitializable<MagneticFlux, double>, IInitializable<MagneticFlux, double, MagneticFluxUnits>,
+        IScaleMappable<MagneticFluxUnits>, IScaleConvertible<MagneticFlux, MagneticFluxUnits>,
+        INormalized<MagneticFluxUnits>, INormalizable<MagneticFlux>,
+        IDimensionAccessible,
+        IValueAccessible<MagneticFluxUnits>,
+        IDuplicatable<MagneticFlux>,
+        IEquatable<MagneticFlux>,
+        IBinaryCompositeTransposable<MagneticFlux, ProductUnit<ElectricPotential, ElectricPotentialUnits, Time, TimeUnits>>,
+        IExponentiable<MagneticFlux, MagneticFluxUnits>,
+        ILinearUnit<MagneticFlux, MagneticFluxUnits>,
+        ICompositeUnit
+    {
+        private readonly double _Wb = 0;
+        public const char SYMBOL = 'Φ';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<MagneticFluxUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { MagneticFluxUnits.Weber, 1.0 },
+            { MagneticFluxUnits.Microweber, 1e-6 },
+            { MagneticFluxUnits.Milliweber, 1e-3 },
+            { MagneticFluxUnits.Kiloweber, 1e3 },
+            { MagneticFluxUnits.Megaweber, 1e6 },
+
+            // CGS & Electromagnetic System
+            { MagneticFluxUnits.Maxwell, 1e-8 },                       // 1 Mx = 1 G·cm² = 10^-8 Wb
+            { MagneticFluxUnits.LineOfForce, 1e-8 },                   // Identical to Maxwell (1 line = 1 Mx = 10^-8 Wb)
+            { MagneticFluxUnits.Kilomaxwell, 1e-5 },                   // 1000 Mx = 10^-5 Wb
+            { MagneticFluxUnits.Statweber, 299.792458 },               // Exact c / 10^6 Wb (~299.792 Wb)
+
+            // Atomic & Theoretical Units
+            { MagneticFluxUnits.AtomicMagneticFlux, 1.054571817e-15 }, // hbar / e (~1.05457 x 10^-15 Wb)
+            { MagneticFluxUnits.PlanckMagneticFlux, 1.1206e-5 }        // sqrt(hbar * c / (G * eps_0)) (~1.1206 x 10^-5 Wb)
+        };
+
+        public static MagneticFluxUnits BaseScale => MagneticFluxUnits.Weber;
+        public (double Magnitude, MagneticFluxUnits Scale, int ScaleOrdinal) Normalized => new(_Wb, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, MagneticFluxUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, MagneticFluxUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public MagneticFlux() { }
+        public MagneticFlux(MagneticFlux instance) => this = instance;
+        public MagneticFlux(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _Wb = magnitude;
+        }
+        public MagneticFlux(double magnitude, MagneticFluxUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _Wb = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static MagneticFlux Initialize() => new();
+        public static MagneticFlux Create(MagneticFlux instance) => new(instance);
+        public static MagneticFlux Create(double magnitude) => new(magnitude);
+        public static MagneticFlux Create(double magnitude, MagneticFluxUnits scale) => new(magnitude, scale);
+
+        public MagneticFlux Duplicate() => new(this);
+        public bool Equals(MagneticFlux other) => _Wb == other._Wb;
+
+        public MagneticFlux Convert(MagneticFluxUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(MagneticFluxUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public MagneticFlux Normalize()
+        {
+            Original = (_Wb, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public ProductUnit<ElectricPotential, ElectricPotentialUnits, Time, TimeUnits> ToComposite()
+            => new ProductUnit<ElectricPotential, ElectricPotentialUnits, Time, TimeUnits>(_Wb).SetScales(ElectricPotentialUnits.Volt, TimeUnits.Second);
+        public static MagneticFlux FromComposite(ProductUnit<ElectricPotential, ElectricPotentialUnits, Time, TimeUnits> comp)
+            => comp.Original.Scale1 == ElectricPotentialUnits.Volt && comp.Original.Scale2 == TimeUnits.Second ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        public QuotientUnit<Energy, EnergyUnits, Current, CurrentUnits> ToJoulePerAmpere()
+            => new QuotientUnit<Energy, EnergyUnits, Current, CurrentUnits>(_Wb).SetScales(EnergyUnits.Joule, CurrentUnits.Ampere);
+
+        public UnitSquared<MagneticFlux, MagneticFluxUnits> Squared() => this * this;
+        public UnitCubed<MagneticFlux, MagneticFluxUnits> Cubed() => this * this * this;
+        public HyperUnit<MagneticFlux, MagneticFluxUnits> Pow(int exp)
+            => new HyperUnit<MagneticFlux, MagneticFluxUnits>(Math.Pow(_Wb, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(MagneticFlux l, MagneticFlux r) => l.Equals(r);
+        public static bool operator !=(MagneticFlux l, MagneticFlux r) => !l.Equals(r);
+        public static bool operator <(MagneticFlux l, MagneticFlux r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(MagneticFlux l, MagneticFlux r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(MagneticFlux l, MagneticFlux r) => l < r || l == r;
+        public static bool operator >=(MagneticFlux l, MagneticFlux r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static MagneticFlux operator +(MagneticFlux l, MagneticFlux r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static MagneticFlux operator -(MagneticFlux l, MagneticFlux r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static MagneticFlux operator *(MagneticFlux l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static MagneticFlux operator *(double l, MagneticFlux r) => r * l;
+        public static MagneticFlux operator /(MagneticFlux l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<MagneticFlux, MagneticFluxUnits> operator *(MagneticFlux l, MagneticFlux r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(MagneticFlux l, MagneticFlux r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct Inductance :
+        IInitializable<Inductance>, IInitializable<Inductance, double>, IInitializable<Inductance, double, InductanceUnits>,
+        IScaleMappable<InductanceUnits>, IScaleConvertible<Inductance, InductanceUnits>,
+        INormalized<InductanceUnits>, INormalizable<Inductance>,
+        IDimensionAccessible,
+        IValueAccessible<InductanceUnits>,
+        IDuplicatable<Inductance>,
+        IEquatable<Inductance>,
+        IBinaryCompositeTransposable<Inductance, QuotientUnit<MagneticFlux, MagneticFluxUnits, Current, CurrentUnits>>,
+        IExponentiable<Inductance, InductanceUnits>,
+        ILinearUnit<Inductance, InductanceUnits>,
+        ICompositeUnit
+    {
+        private readonly double _H = 0;
+        public const char SYMBOL = 'L';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<InductanceUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { InductanceUnits.Henry, 1.0 },
+            { InductanceUnits.Nanohenry, 1e-9 },
+            { InductanceUnits.Microhenry, 1e-6 },
+            { InductanceUnits.Millihenry, 1e-3 },
+            { InductanceUnits.Kilohenry, 1e3 },
+
+            // CGS & Electromagnetic System
+            { InductanceUnits.Abhenry, 1e-9 },                          // 1 abH = 10^-9 H (1 nH)
+            { InductanceUnits.Stathenry, 8.987551787368176e11 },       // c^2 * 10^-7 H (~8.98755 x 10^11 H)
+            { InductanceUnits.Centimeter, 1e-9 },                       // 1 cm of inductance = 1 abH = 10^-9 H
+
+            // Atomic & Theoretical Units
+            { InductanceUnits.AtomicInductance, 2.1798723611035e-19 },   // hbar^2 / (m_e * e^2) (~2.17987 x 10^-19 H)
+            { InductanceUnits.PlanckInductance, 5.99584916e-44 }        // mu_0 * l_P / (4pi) (~5.99585 x 10^-44 H)
+        };
+
+        public static InductanceUnits BaseScale => InductanceUnits.Henry;
+        public (double Magnitude, InductanceUnits Scale, int ScaleOrdinal) Normalized => new(_H, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, InductanceUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, InductanceUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Inductance() { }
+        public Inductance(Inductance instance) => this = instance;
+        public Inductance(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _H = magnitude;
+        }
+        public Inductance(double magnitude, InductanceUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _H = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Inductance Initialize() => new();
+        public static Inductance Create(Inductance instance) => new(instance);
+        public static Inductance Create(double magnitude) => new(magnitude);
+        public static Inductance Create(double magnitude, InductanceUnits scale) => new(magnitude, scale);
+
+        public Inductance Duplicate() => new(this);
+        public bool Equals(Inductance other) => _H == other._H;
+
+        public Inductance Convert(InductanceUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(InductanceUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Inductance Normalize()
+        {
+            Original = (_H, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public QuotientUnit<MagneticFlux, MagneticFluxUnits, Current, CurrentUnits> ToComposite()
+            => new QuotientUnit<MagneticFlux, MagneticFluxUnits, Current, CurrentUnits>(_H).SetScales(MagneticFluxUnits.Weber, CurrentUnits.Ampere);
+        public static Inductance FromComposite(QuotientUnit<MagneticFlux, MagneticFluxUnits, Current, CurrentUnits> comp)
+            => comp.Original.Scale1 == MagneticFluxUnits.Weber && comp.Original.Scale2 == CurrentUnits.Ampere ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        public ProductUnit<ElectricResistance, ElectricResistanceUnits, Time, TimeUnits> ToOhmSecond()
+            => new ProductUnit<ElectricResistance, ElectricResistanceUnits, Time, TimeUnits>(_H).SetScales(ElectricResistanceUnits.Ohm, TimeUnits.Second);
+        public static Inductance FromComposite(ProductUnit<ElectricResistance, ElectricResistanceUnits, Time, TimeUnits> comp)
+            => comp.Original.Scale1 == ElectricResistanceUnits.Ohm && comp.Original.Scale2 == TimeUnits.Second ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        public TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, Current, CurrentUnits> ToVoltSecondPerAmpere()
+            => new TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, Current, CurrentUnits>(_H)
+            .SetScales(ElectricPotentialUnits.Volt, TimeUnits.Second, CurrentUnits.Ampere);
+
+        public UnitSquared<Inductance, InductanceUnits> Squared() => this * this;
+        public UnitCubed<Inductance, InductanceUnits> Cubed() => this * this * this;
+        public HyperUnit<Inductance, InductanceUnits> Pow(int exp)
+            => new HyperUnit<Inductance, InductanceUnits>(Math.Pow(_H, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Inductance l, Inductance r) => l.Equals(r);
+        public static bool operator !=(Inductance l, Inductance r) => !l.Equals(r);
+        public static bool operator <(Inductance l, Inductance r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Inductance l, Inductance r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Inductance l, Inductance r) => l < r || l == r;
+        public static bool operator >=(Inductance l, Inductance r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Inductance operator +(Inductance l, Inductance r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Inductance operator -(Inductance l, Inductance r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Inductance operator *(Inductance l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Inductance operator *(double l, Inductance r) => r * l;
+        public static Inductance operator /(Inductance l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Inductance, InductanceUnits> operator *(Inductance l, Inductance r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Inductance l, Inductance r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+    }
+
+    public struct MagneticFluxDensity :
+        IInitializable<MagneticFluxDensity>, IInitializable<MagneticFluxDensity, double>, IInitializable<MagneticFluxDensity, double, MagneticFluxDensityUnits>,
+        IScaleMappable<MagneticFluxDensityUnits>, IScaleConvertible<MagneticFluxDensity, MagneticFluxDensityUnits>,
+        INormalized<MagneticFluxDensityUnits>, INormalizable<MagneticFluxDensity>,
+        IDimensionAccessible,
+        IValueAccessible<MagneticFluxDensityUnits>,
+        IDuplicatable<MagneticFluxDensity>,
+        IEquatable<MagneticFluxDensity>,
+        IBinaryCompositeTransposable<MagneticFluxDensity, QuotientUnit<MagneticFlux, MagneticFluxUnits, UnitSquared<Length, LengthUnits>, LengthUnits>>,
+        IExponentiable<MagneticFluxDensity, MagneticFluxDensityUnits>,
+        ILinearUnit<MagneticFluxDensity, MagneticFluxDensityUnits>,
+        ICompositeUnit
+    {
+        private readonly double _T = 0;
+        public const char SYMBOL = 'B';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<MagneticFluxDensityUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { MagneticFluxDensityUnits.Tesla, 1.0 },
+            { MagneticFluxDensityUnits.Nanotesla, 1e-9 },
+            { MagneticFluxDensityUnits.Microtesla, 1e-6 },
+            { MagneticFluxDensityUnits.Millitesla, 1e-3 },
+            { MagneticFluxDensityUnits.Kilotesla, 1e3 },
+
+            // CGS & Electromagnetic System
+            { MagneticFluxDensityUnits.Gauss, 1e-4 },                     // 1 G = 10^-4 T
+            { MagneticFluxDensityUnits.Gamma, 1e-9 },                     // 1 gamma = 1 nT = 10^-9 T
+            { MagneticFluxDensityUnits.Stattesla, 299.792458 },           // Exact c / 10^6 T (~299.792 T)
+
+            // Atomic & Theoretical Units
+            { MagneticFluxDensityUnits.AtomicFluxDensity, 235051.756758 }, // hbar / (e * a_0^2) (~2.35052 x 10^5 T)
+            { MagneticFluxDensityUnits.PlanckMagneticField, 5.101e53 }    // sqrt(c^7 / (hbar * G^2 * eps_0)) (~5.101 x 10^53 T)
+        };
+
+        public static MagneticFluxDensityUnits BaseScale => MagneticFluxDensityUnits.Tesla;
+        public (double Magnitude, MagneticFluxDensityUnits Scale, int ScaleOrdinal) Normalized => new(_T, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, MagneticFluxDensityUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, MagneticFluxDensityUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public MagneticFluxDensity() { }
+        public MagneticFluxDensity(MagneticFluxDensity instance) => this = instance;
+        public MagneticFluxDensity(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _T = magnitude;
+        }
+        public MagneticFluxDensity(double magnitude, MagneticFluxDensityUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _T = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static MagneticFluxDensity Initialize() => new();
+        public static MagneticFluxDensity Create(MagneticFluxDensity instance) => new(instance);
+        public static MagneticFluxDensity Create(double magnitude) => new(magnitude);
+        public static MagneticFluxDensity Create(double magnitude, MagneticFluxDensityUnits scale) => new(magnitude, scale);
+
+        public MagneticFluxDensity Duplicate() => new(this);
+        public bool Equals(MagneticFluxDensity other) => _T == other._T;
+
+        public MagneticFluxDensity Convert(MagneticFluxDensityUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(MagneticFluxDensityUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public MagneticFluxDensity Normalize()
+        {
+            Original = (_T, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public QuotientUnit<MagneticFlux, MagneticFluxUnits, UnitSquared<Length, LengthUnits>, LengthUnits> ToComposite()
+            => new QuotientUnit<MagneticFlux, MagneticFluxUnits, UnitSquared<Length, LengthUnits>, LengthUnits>(_T).SetScales(MagneticFluxUnits.Weber, LengthUnits.Meter);
+        public static MagneticFluxDensity FromComposite(QuotientUnit<MagneticFlux, MagneticFluxUnits, UnitSquared<Length, LengthUnits>, LengthUnits> comp)
+            => comp.Original.Scale1 == MagneticFluxUnits.Weber && comp.Original.Scale2 == LengthUnits.Meter ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        public TernaryQuotientUnit<Denominator<CompositeProduct<Current, Length>>, Force, ForceUnits, Current, CurrentUnits, Length, LengthUnits> ToNewton_PerAmpereMeter()
+            => new TernaryQuotientUnit<Denominator<CompositeProduct<Current, Length>>, Force, ForceUnits, Current, CurrentUnits, Length, LengthUnits>(_T)
+            .SetScales(ForceUnits.Newton, CurrentUnits.Ampere, LengthUnits.Meter);
+        public TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, UnitSquared<Length, LengthUnits>, LengthUnits> ToVoltSecond_PerSquareMeter()
+            => new TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, UnitSquared<Length, LengthUnits>, LengthUnits>(_T)
+            .SetScales(ElectricPotentialUnits.Volt, TimeUnits.Second, LengthUnits.Meter);
+
+        public UnitSquared<MagneticFluxDensity, MagneticFluxDensityUnits> Squared() => this * this;
+        public UnitCubed<MagneticFluxDensity, MagneticFluxDensityUnits> Cubed() => this * this * this;
+        public HyperUnit<MagneticFluxDensity, MagneticFluxDensityUnits> Pow(int exp)
+            => new HyperUnit<MagneticFluxDensity, MagneticFluxDensityUnits>(Math.Pow(_T, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(MagneticFluxDensity l, MagneticFluxDensity r) => l.Equals(r);
+        public static bool operator !=(MagneticFluxDensity l, MagneticFluxDensity r) => !l.Equals(r);
+        public static bool operator <(MagneticFluxDensity l, MagneticFluxDensity r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(MagneticFluxDensity l, MagneticFluxDensity r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(MagneticFluxDensity l, MagneticFluxDensity r) => l < r || l == r;
+        public static bool operator >=(MagneticFluxDensity l, MagneticFluxDensity r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static MagneticFluxDensity operator +(MagneticFluxDensity l, MagneticFluxDensity r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static MagneticFluxDensity operator -(MagneticFluxDensity l, MagneticFluxDensity r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static MagneticFluxDensity operator *(MagneticFluxDensity l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static MagneticFluxDensity operator *(double l, MagneticFluxDensity r) => r * l;
+        public static MagneticFluxDensity operator /(MagneticFluxDensity l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<MagneticFluxDensity, MagneticFluxDensityUnits> operator *(MagneticFluxDensity l, MagneticFluxDensity r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(MagneticFluxDensity l, MagneticFluxDensity r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }

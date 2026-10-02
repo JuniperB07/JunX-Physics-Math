@@ -41,6 +41,7 @@ namespace JunX
         public static readonly ElectricResistance VonKlitzing = new(25812.807);
         public static readonly ElectricResistance FreeSpaceImpedance = new(376.730313);
         public static readonly ElectricConductance ConductanceQuantum = new(7.74809e-5);
+        public static readonly MagneticFlux MagneticFluxQuantum = new(2.067833848e-15);
     }
 
     /// <summary>
