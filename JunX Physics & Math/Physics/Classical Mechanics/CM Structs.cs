@@ -1,6 +1,7 @@
 ﻿using JunX.Mathematics;
 using JunX.Mathematics.Geometry;
 using JunX.Physics.BaseUnits;
+using JunX.Physics.Electromagnetism;
 using JunX.Physics.Kinematics;
 using Microsoft.CodeAnalysis;
 using System;
@@ -150,6 +151,12 @@ namespace JunX.Physics.ClassicalMechanics
             => (mass * tangentialVelocity.Squared()) / radius;
         public static Force Centripetal(Mass mass, AngularVelocity omega, Length radius)
             => mass * omega.Squared() * radius;
+
+        public static Force Electromagnetic((ElectricCharge Charge1, ElectricCharge Charge2) charges, Length radius)
+        {
+            var unit = MathOperators.Absolute(charges.Charge1 * charges.Charge2, ElectricCharge.BaseScale).Divide(radius.Squared().ToUnitSquared(), Length.BaseScale);
+            return CompositeReductor.Multiply(Constants.CoulombConstant, unit);
+        }
         #endregion
 
         #region CONDITIONAL OPERATORS

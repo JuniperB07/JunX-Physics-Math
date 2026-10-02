@@ -23,4 +23,65 @@ namespace JunX.Physics.Electromagnetism
         AtomicCharge,
         PlanckCharge
     }
+
+    public enum ElectricPotentialUnits
+    {
+        Volt,
+        Microvolt,
+        Millivolt,
+        Kilovolt,
+        Megavolt,
+        Gigavolt,
+        Teravolt,
+        Statvolt,
+        Abvolt,
+        AtomicPotential,
+        PlanckVoltage
+    }
+
+    public enum ElectricResistanceUnits
+    {
+        Ohm,
+        Micohm,
+        Milliohm,
+        Kilohm,
+        Megohm,
+        Gigohm,
+        Terohm,
+        Statohm,
+        Abohm,
+        AtomicResistance,
+        PlanckImpedance
+    }
+
+    public enum ElectricConductanceUnits
+    {
+        Siemens,
+        Microsiemens,
+        Millisiemens,
+        Kilosiemens,
+        Megasiemens,
+        Mho,
+        Statsiemens,
+        Absiemens,
+        AtomicConductance,
+        PlanckAdmittance
+    }
+
+    public enum CapacitanceUnits
+    {
+        Farad,
+        Millifarad,
+        Microfarad,
+        Nanofarad,
+        Picofarad,
+        Femtofarad,
+        Kilofarad,
+        Statfarad,
+        Abfarad,
+        Centimeter,
+        Ampere_Second_PerVolt,
+        AtomicCapacitance,
+        PlanckCapacitalce
+    }
 }

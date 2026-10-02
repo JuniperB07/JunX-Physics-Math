@@ -1,6 +1,7 @@
 ﻿using JunX.Mathematics.Geometry;
 using JunX.Physics.BaseUnits;
 using JunX.Physics.ClassicalMechanics;
+using JunX.Physics.Electromagnetism;
 using JunX.Physics.Kinematics;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,19 @@ namespace JunX
             UnitSquared<Mass, MassUnits>, MassUnits> GravitationalConstant
             = new TernaryQuotientUnit<Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>, Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits, UnitSquared<Mass, MassUnits>, MassUnits>(6.674e-11)
             .SetScales(ForceUnits.Newton, LengthUnits.Meter, MassUnits.Kilogram);
+
+        public static readonly TernaryQuotientUnit<
+            Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>,
+            Force, ForceUnits,
+            UnitSquared<Length, LengthUnits>, LengthUnits,
+            UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits> CoulombConstant
+            = new TernaryQuotientUnit<Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>, Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits, UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits>(8.99e9)
+            .SetScales(ForceUnits.Newton, LengthUnits.Meter, ElectricChargeUnits.Coulomb);
+
+        public static readonly ElectricCharge ElementaryCharge = new(1.602176634e-19);
+        public static readonly ElectricResistance VonKlitzing = new(25812.807);
+        public static readonly ElectricResistance FreeSpaceImpedance = new(376.730313);
+        public static readonly ElectricConductance ConductanceQuantum = new(7.74809e-5);
     }
 
     /// <summary>
