@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks.Sources;
 
 namespace JunX.Physics.ClassicalMechanics
 {
@@ -157,6 +158,17 @@ namespace JunX.Physics.ClassicalMechanics
             var unit = MathOperators.Absolute(charges.Charge1 * charges.Charge2, ElectricCharge.BaseScale).Divide(radius.Squared().ToUnitSquared(), Length.BaseScale);
             return CompositeReductor.Multiply(Constants.CoulombConstant, unit);
         }
+
+        public static Force HookesLaw(QuotientUnit<Force, ForceUnits, Length, LengthUnits> stiffness, Length displacement)
+            => (stiffness * displacement) * -1.0;
+        public static Force MaximumStaticFriction(double frictionCoefficient, Force normal) => frictionCoefficient * normal;
+        public static Force ElectricField(ElectricCharge charge, QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> electricFieldVector)
+            => charge * electricFieldVector;
+        public static Force LorentzMagneticForce(ElectricCharge movingCharge, Velocity chargeVelocity, MagneticFluxDensity fieldStrength)
+            => movingCharge * (chargeVelocity * fieldStrength);
+        public static Force LorentzMagneticForce(ElectricCharge movingCharge, Velocity chargeVelocity, MagneticFluxDensity fieldStrength, Angle theta)
+            => MathOperators.Absolute(movingCharge, ElectricCharge.BaseScale) * (chargeVelocity * fieldStrength) * Math.Sin(theta.As(AngleUnits.Radians));
+
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -193,6 +205,10 @@ namespace JunX.Physics.ClassicalMechanics
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         public static Acceleration operator /(Force l, Mass r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        public static QuotientUnit<Force, ForceUnits, Length, LengthUnits> operator /(Force l, Length r)
+            => new QuotientUnit<Force, ForceUnits, Length, LengthUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(BaseScale, Length.BaseScale);
+        public static QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> operator /(Force l, ElectricCharge r)
+            => new QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(BaseScale, ElectricCharge.BaseScale);
         #endregion
     }
 

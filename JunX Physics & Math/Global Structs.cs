@@ -1583,6 +1583,7 @@ namespace JunX
             => l.Original.Scale2Ordinal == r.Original.ScaleOrdinal ?
             Str1.Create(l.Original.Magnitude * r.Original.Magnitude, l.Original.Scale1) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static Str1 operator *(Str2 l, QuotientUnit<Str1, En1, Str2, En2> r) => r * l;
 
         public static double operator /(QuotientUnit<Str1, En1, Str2, En2> l, QuotientUnit<Str1, En1, Str2, En2> r)
             => l.IsEqualScales(r) ?

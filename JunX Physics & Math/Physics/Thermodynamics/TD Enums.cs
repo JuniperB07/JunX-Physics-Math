@@ -20,4 +20,19 @@ namespace JunX.Physics.Thermodynamics
         Hartley,
         PlanckEntropy
     }
+
+    public enum SpecificHeatCapacityUnits
+    {
+        Joule_PerKilogramKelvin,
+        Joule_PerGramKelvin,
+        Joule_PerKilogramCelsius,
+        Kilojoule_PerKilogramKelvin,
+        BTU_PerPoundFahrenheit,
+        BTU_PerPoundRankine,
+        Calorie_PerGramCelsius,
+        Calorie_PerGramKelvin,
+        Kilocalorie_PerKilogramKelvin,
+        Boltzmann_PerAtomicMass,
+        PlanckSpecificHeatCapacity
+    }
 }

@@ -1118,6 +1118,12 @@ namespace JunX.Physics.Electromagnetism
         public static double operator /(MagneticFluxDensity l, MagneticFluxDensity r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> operator *(MagneticFluxDensity l, Velocity r)
+            => new QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetScales(ForceUnits.Newton, ElectricChargeUnits.Coulomb);
+        public static QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> operator *(Velocity l, MagneticFluxDensity r) => r * l;
+        #endregion
     }
 
     public struct MagneticFluxStrength :

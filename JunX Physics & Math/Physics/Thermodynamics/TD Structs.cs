@@ -1,6 +1,7 @@
 ﻿using JunX.Physics.BaseUnits;
 using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Electromagnetism;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -140,6 +141,141 @@ namespace JunX.Physics.Thermodynamics
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
 
         public static double operator /(Entropy l, Entropy r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+    }
+
+    public struct SpecificHeatCapacity :
+        IInitializable<SpecificHeatCapacity>, IInitializable<SpecificHeatCapacity, double>, IInitializable<SpecificHeatCapacity, double, SpecificHeatCapacityUnits>,
+        IScaleMappable<SpecificHeatCapacityUnits>, IScaleConvertible<SpecificHeatCapacity, SpecificHeatCapacityUnits>,
+        INormalized<SpecificHeatCapacityUnits>, INormalizable<SpecificHeatCapacity>,
+        IDimensionAccessible,
+        IValueAccessible<SpecificHeatCapacityUnits>,
+        IDuplicatable<SpecificHeatCapacity>,
+        IEquatable<SpecificHeatCapacity>,
+        IExponentiable<SpecificHeatCapacity, SpecificHeatCapacityUnits>,
+        ILinearUnit<SpecificHeatCapacity, SpecificHeatCapacityUnits>,
+        ICompositeUnit
+    {
+        private readonly double _J_KgK = 0;
+        public const char SYMBOL = 'c';
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<SpecificHeatCapacityUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { SpecificHeatCapacityUnits.Joule_PerKilogramKelvin, 1.0 },
+            { SpecificHeatCapacityUnits.Joule_PerGramKelvin, 1e3 },                  // 1 J/(g·K) = 1000 J/(kg·K)
+            { SpecificHeatCapacityUnits.Joule_PerKilogramCelsius, 1.0 },              // Identical to J/(kg·K)
+            { SpecificHeatCapacityUnits.Kilojoule_PerKilogramKelvin, 1e3 },            // 1 kJ/(kg·K) = 1000 J/(kg·K)
+
+            // Imperial & Thermal Units
+            { SpecificHeatCapacityUnits.BTU_PerPoundFahrenheit, 4186.8 },             // ISO/IT BTU / (lb·°F) (~4186.8 J/(kg·K))
+            { SpecificHeatCapacityUnits.BTU_PerPoundRankine, 4186.8 },                // Identical to BTU/(lb·°F) (~4186.8 J/(kg·K))
+            { SpecificHeatCapacityUnits.Calorie_PerGramCelsius, 4184.0 },             // Thermochemical calorie (4184 J/(kg·K))
+            { SpecificHeatCapacityUnits.Calorie_PerGramKelvin, 4184.0 },              // Thermochemical calorie (4184 J/(kg·K))
+            { SpecificHeatCapacityUnits.Kilocalorie_PerKilogramKelvin, 4184.0 },      // Identical to cal/(g·K) (4184 J/(kg·K))
+
+            // Statistical & Natural Units
+            { SpecificHeatCapacityUnits.Boltzmann_PerAtomicMass, 8314.46261815324 }, // k_B / u (Ideal Gas Constant R / 10^-3) (~8314.46 J/(kg·K))
+            { SpecificHeatCapacityUnits.PlanckSpecificHeatCapacity, 6.3359677e-16 }    // k_B / m_P (~6.33597 x 10^-16 J/(kg·K))
+        };
+
+        public static SpecificHeatCapacityUnits BaseScale => SpecificHeatCapacityUnits.Joule_PerKilogramKelvin;
+        public (double Magnitude, SpecificHeatCapacityUnits Scale, int ScaleOrdinal) Normalized => new(_J_KgK, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, SpecificHeatCapacityUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, SpecificHeatCapacityUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public SpecificHeatCapacity() { }
+        public SpecificHeatCapacity(SpecificHeatCapacity instance) => this = instance;
+        public SpecificHeatCapacity(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _J_KgK = magnitude;
+        }
+        public SpecificHeatCapacity(double magnitude, SpecificHeatCapacityUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _J_KgK = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static SpecificHeatCapacity Initialize() => new();
+        public static SpecificHeatCapacity Create(SpecificHeatCapacity instance) => new(instance);
+        public static SpecificHeatCapacity Create(double magnitude) => new(magnitude);
+        public static SpecificHeatCapacity Create(double magnitude, SpecificHeatCapacityUnits scale) => new(magnitude, scale);
+
+        public SpecificHeatCapacity Duplicate() => new(this);
+        public bool Equals(SpecificHeatCapacity other) => _J_KgK == other._J_KgK;
+
+        public SpecificHeatCapacity Convert(SpecificHeatCapacityUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(SpecificHeatCapacityUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public SpecificHeatCapacity Normalize()
+        {
+            Original = (_J_KgK, BaseScale, (int)BaseScale);
+            return this;
+        }
+
+        public TernaryQuotientUnit<Denominator<CompositeProduct<Mass, Temperature>>, Energy, EnergyUnits, Mass, MassUnits, Temperature, TemperatureUnits> ToComposite()
+            => new TernaryQuotientUnit<Denominator<CompositeProduct<Mass, Temperature>>, Energy, EnergyUnits, Mass, MassUnits, Temperature, TemperatureUnits>(_J_KgK)
+            .SetScales(EnergyUnits.Joule, MassUnits.Kilogram, TemperatureUnits.Kelvin);
+        public static SpecificHeatCapacity FromComposite(TernaryQuotientUnit<Denominator<CompositeProduct<Mass, Temperature>>, Energy, EnergyUnits, Mass, MassUnits, Temperature, TemperatureUnits> comp)
+            => comp.Scales.Scale1 == EnergyUnits.Joule && comp.Scales.Scale2 == MassUnits.Kilogram && comp.Scales.Scale3 == TemperatureUnits.Kelvin ?
+            new(comp.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+        public UnitSquared<SpecificHeatCapacity, SpecificHeatCapacityUnits> Squared() => this * this;
+        public UnitCubed<SpecificHeatCapacity, SpecificHeatCapacityUnits> Cubed() => this * this * this;
+        public HyperUnit<SpecificHeatCapacity, SpecificHeatCapacityUnits> Pow(int exp)
+            => new HyperUnit<SpecificHeatCapacity, SpecificHeatCapacityUnits>(Math.Pow(_J_KgK, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(SpecificHeatCapacity l, SpecificHeatCapacity r) => l.Equals(r);
+        public static bool operator !=(SpecificHeatCapacity l, SpecificHeatCapacity r) => !l.Equals(r);
+        public static bool operator <(SpecificHeatCapacity l, SpecificHeatCapacity r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(SpecificHeatCapacity l, SpecificHeatCapacity r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(SpecificHeatCapacity l, SpecificHeatCapacity r) => l < r || l == r;
+        public static bool operator >=(SpecificHeatCapacity l, SpecificHeatCapacity r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static SpecificHeatCapacity operator +(SpecificHeatCapacity l, SpecificHeatCapacity r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static SpecificHeatCapacity operator -(SpecificHeatCapacity l, SpecificHeatCapacity r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static SpecificHeatCapacity operator *(SpecificHeatCapacity l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static SpecificHeatCapacity operator *(double l, SpecificHeatCapacity r) => r * l;
+        public static SpecificHeatCapacity operator /(SpecificHeatCapacity l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<SpecificHeatCapacity, SpecificHeatCapacityUnits> operator *(SpecificHeatCapacity l, SpecificHeatCapacity r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(SpecificHeatCapacity l, SpecificHeatCapacity r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
 
