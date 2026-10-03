@@ -244,6 +244,8 @@ namespace JunX.Mathematics.Geometry
             => l.Original.Scale1 == MassUnits.Kilogram ?
             new(l.Original.Magnitude * r.Normalized.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.NON_NORMALIZED_OPERAND_SCALES);
+        
+
         #endregion
     }
 

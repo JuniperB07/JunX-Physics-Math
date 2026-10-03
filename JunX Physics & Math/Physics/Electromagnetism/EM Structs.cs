@@ -1074,6 +1074,17 @@ namespace JunX.Physics.Electromagnetism
         public TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, UnitSquared<Length, LengthUnits>, LengthUnits> ToVoltSecond_PerSquareMeter()
             => new TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, UnitSquared<Length, LengthUnits>, LengthUnits>(_T)
             .SetScales(ElectricPotentialUnits.Volt, TimeUnits.Second, LengthUnits.Meter);
+        public QuaternaryQuotientUnit<
+            BinaryComposite<
+                Numerator<CompositeProduct<Force, Time>>,
+                Denominator<CompositeProduct<ElectricCharge, Length>>>,
+            Force, ForceUnits,
+            Time, TimeUnits,
+            ElectricCharge, ElectricChargeUnits,
+            Length, LengthUnits> ToNewtonSecond_PerCoulombMeter()
+            => new QuaternaryQuotientUnit<BinaryComposite<Numerator<CompositeProduct<Force, Time>>, Denominator<CompositeProduct<ElectricCharge, Length>>>, Force, ForceUnits, Time, TimeUnits, ElectricCharge, ElectricChargeUnits, Length, LengthUnits>(_T)
+            .SetScales(ForceUnits.Newton, TimeUnits.Second, ElectricChargeUnits.Coulomb, LengthUnits.Meter);
+
 
         public UnitSquared<MagneticFluxDensity, MagneticFluxDensityUnits> Squared() => this * this;
         public UnitCubed<MagneticFluxDensity, MagneticFluxDensityUnits> Cubed() => this * this * this;

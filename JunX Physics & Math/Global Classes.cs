@@ -4,6 +4,7 @@ using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Electromagnetism;
 using JunX.Physics.Kinematics;
 using JunX.Physics.Thermodynamics;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -197,6 +198,22 @@ namespace JunX
             var unit = ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2>.Create(mag);
             return unit.SetScales(l.Original.Scale1, l.Original.Scale2);
         }
+        public static ProductUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2>
+            (ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> l,
+            ProductUnit<Str1, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale1Ordinal != r.Original.Scale1Ordinal ||
+                l.Original.Scale2Ordinal != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale2);
+        }
         #endregion
 
         #region (A^2)/(B^2)
@@ -240,7 +257,30 @@ namespace JunX
             var unit = QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2>.Create(mag);
             return unit.SetScales(r.Original.Scale1, r.Original.Scale2);
         }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2>
+            (QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> l,
+            QuotientUnit<Str2, En2, Str1, En1> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale1Ordinal != r.Original.Scale2Ordinal ||
+                l.Original.Scale2Ordinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
 
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2>
+            (QuotientUnit<Str2, En2, Str1, En1> l,
+            QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            => Multiply(r, l);
         #endregion
 
         #region AB * CD
@@ -265,8 +305,492 @@ namespace JunX
             return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2, l.Scales.Scale3);
         }
         #endregion
-    }
 
+        #region A(B^2) & (A^2)B
+        public static ProductUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2>
+            (ProductUnit<Str1, En1, UnitSquared<Str2, En2>, En2> l,
+            Str2 r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2>
+            (ProductUnit<UnitSquared<Str1, En1>, En1, Str2, En2> l,
+            Str1 r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale1Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(r.Original.Scale, l.Original.Scale2);
+        }
+        #endregion
+
+        #region A/(B^2)
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2>
+            (QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2> l,
+            Str2 r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2>
+            (Str2 l,
+            QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            => Multiply(r, l);
+        public static UnitSquared<Str2, En2> Divide<Str1, En1, Str2, En2>
+            (Str1 l,
+            QuotientUnit<Str1, En1, UnitSquared<Str2, En2>, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (r.Original.Scale1Ordinal != l.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            return UnitSquared<Str2, En2>.Create(mag, r.Original.Scale2);
+        }
+        #endregion
+
+        #region (A^2)/B
+        public static QuotientUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2>
+            (Str1 l,
+            QuotientUnit<UnitSquared<Str1, En1>, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.ScaleOrdinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale, r.Original.Scale2);
+        }
+        public static UnitSquared<Str1, En1> Multiply<Str1, En1, Str2, En2>
+            (QuotientUnit<UnitSquared<Str1, En1>, En1, Str2, En2> l,
+            Str2 r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            return UnitSquared<Str1, En1>.Create(mag, l.Original.Scale1);
+        }
+        public static UnitSquared<Str1, En1> Multiply<Str1, En1, Str2, En2>
+            (Str2 l,
+            QuotientUnit<UnitSquared<Str1, En1>, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            => Multiply(r, l);
+        #endregion
+
+        #region SIMPLIFY
+        public static QuotientUnit<Str1, En1, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str2, En2> l,
+            ProductUnit<Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale2);
+        }
+        public static QuotientUnit<Str3, En3, Str1, En1> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str2, En2, Str3, En3> l,
+            ProductUnit<Str1, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            => Divide(r, l).Reciprocate();
+        public static QuotientUnit<Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str2, En2> l,
+            ProductUnit<Str1, En1, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.Scale1Ordinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale2, r.Original.Scale2);
+        }
+        public static QuotientUnit<Str3, En3, Str2, En2> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str3, En3> l,
+            ProductUnit<Str1, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.Scale1Ordinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str3, En3, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale2, r.Original.Scale2);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str3, En3> l,
+            ProductUnit<Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale1);
+        }
+        public static QuotientUnit<Str2, En2, Str1, En1> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str2, En2, Str3, En3> l,
+            ProductUnit<Str1, En1, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.Scale2Ordinal != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = QuotientUnit<Str2, En2, Str1, En1>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, r.Original.Scale1);
+        }
+        #endregion
+
+        #region ABC
+        public static TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str2, En2> l, Str3 r, En3 rEn)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            double mag = l.Original.Magnitude * r.Original.Magnitude;
+            var unit = TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2, r.Original.Scale);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str3 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal3 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str2 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal2 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale3);
+        }
+        public static ProductUnit<Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryProductUnit<CompositeProduct<Str1, Str2>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str1 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal1 == r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale2, l.Scales.Scale3);
+        }
+        #endregion
+
+        #region AB/C
+        public static TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (ProductUnit<Str1, En1, Str2, En2> l, Str3 r, En3 rEn)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2, r.Original.Scale);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str3 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal3 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (Str3 l,
+            TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            => Multiply(r, l);
+        public static QuotientUnit<Str1, En1, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (Str2 l,
+            TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.ScaleOrdinal != r.Scales.Ordinal2)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale1, r.Scales.Scale3);
+        }
+        public static QuotientUnit<Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (Str1 l,
+            TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.ScaleOrdinal != r.Scales.Ordinal1)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = QuotientUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale2, r.Scales.Scale3);
+        }
+        #endregion
+
+        #region A/BC
+        public static TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (Str1 l, En1 lEn, ProductUnit<Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            double mag = l.Original.Magnitude / r.Original.Magnitude;
+            var unit = TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Original.Scale, r.Original.Scale1, r.Original.Scale2);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str3 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal3 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (Str3 l,
+            TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            => Multiply(r, l);
+        public static QuotientUnit<Str1, En1, Str3, En3> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> l,
+            Str2 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Scales.Ordinal2 != r.Original.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale3);
+        }
+        public static QuotientUnit<Str1, En1, Str3, En3> Multiply<Str1, En1, Str2, En2, Str3, En3>
+            (Str2 l,
+            TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            => Multiply(r, l);
+        public static ProductUnit<Str2, En2, Str3, En3> Divide<Str1, En1, Str2, En2, Str3, En3>
+            (Str1 l,
+            TernaryQuotientUnit<Denominator<CompositeProduct<Str2, Str3>>, Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+        {
+            if (l.Original.ScaleOrdinal != r.Scales.Ordinal1)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = ProductUnit<Str2, En2, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale2, r.Scales.Scale3);
+        }
+        #endregion
+
+        #region QUATERNARY UNITS
+        public static QuotientUnit<Str1, En1, Str3, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str4, En4>
+            (QuotientUnit<Str4, En4, Str2, En2> l,
+            QuaternaryQuotientUnit<
+                BinaryComposite<
+                    Numerator<CompositeProduct<Str1, Str2>>,
+                    Denominator<CompositeProduct<Str3, Str4>>>,
+                Str1, En1, Str2, En2, Str3, En3, Str4, En4> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where En4 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str4 : struct, ILinearUnit<Str4, En4>
+        {
+            if (l.Original.Scale1Ordinal != r.Scales.Ordinal4 ||
+                l.Original.Scale2Ordinal != r.Scales.Ordinal2)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude / r.Magnitude;
+            var unit = QuotientUnit<Str1, En1, Str3, En3>.Create(mag);
+            return unit.SetScales(r.Scales.Scale1, r.Scales.Scale3);
+        }
+        public static QuotientUnit<Str1, En1, Str3, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str4, En4>
+            (QuaternaryQuotientUnit<
+                BinaryComposite<
+                    Numerator<CompositeProduct<Str1, Str2>>,
+                    Denominator<CompositeProduct<Str3, Str4>>>,
+                Str1, En1, Str2, En2, Str3, En3, Str4, En4> l,
+            QuotientUnit<Str4, En4, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where En4 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str4 : struct, ILinearUnit<Str4, En4>
+            => Multiply(r, l);
+        #endregion
+    }
     /// <summary>
     /// Represents a concrete composite operator strategy specializing in multi-factor multiplication operations across composite unit structures.
     /// </summary>
@@ -944,7 +1468,7 @@ namespace JunX
     /// allowing runtime dispatchers and expression processors to recursively analyze and flatten deeply nested operational structures.
     /// </para>
     /// </remarks>
-    public class BinaryComposite<TComp1, TComp2> : ICompositeUnit
+    public class BinaryComposite<TComp1, TComp2> : DivisionOperands, ICompositeUnit
         where TComp1 : class, ICompositeUnit
         where TComp2 : class, ICompositeUnit
     { }

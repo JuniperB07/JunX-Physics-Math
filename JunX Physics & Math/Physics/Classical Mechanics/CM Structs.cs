@@ -168,7 +168,12 @@ namespace JunX.Physics.ClassicalMechanics
             => movingCharge * (chargeVelocity * fieldStrength);
         public static Force LorentzMagneticForce(ElectricCharge movingCharge, Velocity chargeVelocity, MagneticFluxDensity fieldStrength, Angle theta)
             => MathOperators.Absolute(movingCharge, ElectricCharge.BaseScale) * (chargeVelocity * fieldStrength) * Math.Sin(theta.As(AngleUnits.Radians));
-
+        public static Force CurrentCarryingWireMagneticForce(Current electric, Length wire, MagneticFluxDensity fieldStrength)
+            => electric * CompositeOperator.Multiply(fieldStrength.ToNewton_PerAmpereMeter(), wire);
+        public static Force CurrentCarryingWireMagneticForce(Current electric, Length wire, MagneticFluxDensity fieldStrength, Angle theta)
+            => CurrentCarryingWireMagneticForce(electric, wire, fieldStrength) * Math.Sin(theta.As(AngleUnits.Radians));
+        public static Force LorentzForce(ElectricCharge charge, QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> electricField, Velocity velocity, MagneticFluxDensity magneticField)
+            => charge * (electricField + CompositeOperator.Multiply(velocity.ToComposite(), magneticField.ToNewtonSecond_PerCoulombMeter()));
         #endregion
 
         #region CONDITIONAL OPERATORS
