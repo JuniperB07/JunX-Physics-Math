@@ -1,6 +1,7 @@
 ﻿using JunX.Mathematics.Geometry;
 using JunX.Physics.ClassicalMechanics;
 using JunX.Physics.Kinematics;
+using JunX.Physics.Thermodynamics;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualBasic;
 using System;
@@ -358,6 +359,18 @@ namespace JunX.Physics.BaseUnits
             .SetScales(MassUnits.Kilogram, AngularVelocityUnits.RadiansPerSecond);
         public static ProductUnit<UnitSquared<AngularVelocity, AngularVelocityUnits>, AngularVelocityUnits, Mass, MassUnits> operator *(UnitSquared<AngularVelocity, AngularVelocityUnits> l, Mass r)
             => (r * l).Commute();
+
+        public static ProductUnit<Mass, MassUnits, Area, AreaUnits> operator *(Mass l, Area r)
+            => new ProductUnit<Mass, MassUnits, Area, AreaUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetScales(Mass.BaseScale, Area.BaseScale);
+
+        public static Entropy operator *(Mass l, SpecificHeatCapacity r)
+            => new QuotientUnit<Energy, EnergyUnits, Temperature, TemperatureUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude)
+            .SetScales(Energy.BaseScale, Temperature.BaseScale);
+        public static Energy operator *(Mass l, QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> r)
+            => r.Original.Scale2 == BaseScale ?
+            new(l.Normalized.Magnitude * r.Original.Magnitude, r.Original.Scale1) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+        public static Energy operator *(QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> l, Mass r) => r * l;
         #endregion
     }
 
@@ -606,6 +619,10 @@ namespace JunX.Physics.BaseUnits
         }
         #endregion
 
+        #region DERIVATIONS
+        public static Temperature Delta(Temperature initial, Temperature final) => final - initial;
+        #endregion
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(Temperature l, Temperature r) => l.Equals(r);
         public static bool operator !=(Temperature l, Temperature r) => !l.Equals(r);
@@ -633,6 +650,13 @@ namespace JunX.Physics.BaseUnits
 
         public static double operator /(Temperature l, Temperature r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> operator *(Temperature l, SpecificHeatCapacity r)
+            => r * l;
+        public static Energy operator *(Temperature l, Entropy r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 }

@@ -95,6 +95,7 @@ namespace JunX
         public const string NON_ZERO_RECIPROCAL_NUMERATOR = "Reciprocal numerator must be 0.";
         public const string NON_INVERSE_RECIPROCAL = "ReciprocalUnit numerator value is not 1.";
         public const string NON_NORMALIZED_OPERAND_SCALES = "Scale values of both operands must all be normalized.";
+        public const string GENERIC_PARAMETER_TYPE_MISMATCH = "Parameter generic types does not match the requirement.";
 
         public static string Insufficient_Array_Length(int minimumLength)
             => $"Array length must not be less than {minimumLength}.";
@@ -790,6 +791,50 @@ namespace JunX
             where Str4 : struct, ILinearUnit<Str4, En4>
             => Multiply(r, l);
         #endregion
+
+        #region SPECIALIZED
+        //  AB'  =   AB/C * C/B'
+        //  Where B = B'^2 and B' = Sqrt(B)
+        //  Where B & B' have the same base unit.
+        public static ProductUnit<Str1, En1, Str2P, En2P> Multiply<Str1, En1, Str2, En2, Str3, En3, Str2P, En2P>
+            (TernaryQuotientUnit<
+                Numerator<CompositeProduct<Str1, Str2>>,
+                Str1, En1, Str2, En2, Str3, En3> l,
+            QuotientUnit<Str3, En3, Str2P, En2P> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where En2P : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str2P : struct, ILinearUnit<Str2P, En2P>
+        {
+            if (typeof(Str2) != typeof(UnitSquared<Str2P, En2P>))
+                throw new InvalidOperationException(ErrorMsg.GENERIC_PARAMETER_TYPE_MISMATCH);
+
+            if (l.Scales.Ordinal2 != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2P, En2P>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, r.Original.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str2P, En2P> Multiply<Str1, En1, Str2, En2, Str3, En3, Str2P, En2P>
+            (QuotientUnit<Str3, En3, Str2P, En2P> l,
+            TernaryQuotientUnit<
+                Numerator<CompositeProduct<Str1, Str2>>,
+                Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where En2P : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str2P : struct, ILinearUnit<Str2P, En2P>
+            => Multiply(r, l);
+        #endregion
     }
     /// <summary>
     /// Represents a concrete composite operator strategy specializing in multi-factor multiplication operations across composite unit structures.
@@ -1472,4 +1517,39 @@ namespace JunX
         where TComp1 : class, ICompositeUnit
         where TComp2 : class, ICompositeUnit
     { }
+
+    public class BinaryOperator
+    {
+        //  AB' =   A/B' * B
+        //  Where B = B'^2 and B' = Sqrt(B)
+        //  Where B and B' have the same base unit
+        public static ProductUnit<Str1, En1, Str2P, En2P> Multiply<Str1, En1, Str2, En2, Str2P, En2P>
+            (QuotientUnit<Str1, En1, Str2P, En2P> l, (Str2 Unit, En2 Scale) r)
+            where En1: Enum
+            where En2: Enum
+            where En2P: Enum
+            where Str1: struct, ILinearUnit<Str1, En1>
+            where Str2: struct, ILinearUnit<Str2, En2>
+            where Str2P: struct, ILinearUnit<Str2P, En2P>
+        {
+            if (typeof(Str2) != typeof(UnitSquared<Str2P, En2P>))
+                throw new InvalidOperationException(ErrorMsg.GENERIC_PARAMETER_TYPE_MISMATCH);
+
+            if (l.Original.Scale2Ordinal != r.Unit.Normalized.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Original.Magnitude * r.Unit.Normalized.Magnitude;
+            var unit = ProductUnit<Str1, En1, Str2P, En2P>.Create(mag);
+            return unit.SetScales(l.Original.Scale1, l.Original.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str2P, En2P> Multiply<Str1, En1, Str2, En2, Str2P, En2P>
+            ((Str2 Unit, En2 Scale) l, QuotientUnit<Str1, En1, Str2P, En2P> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En2P : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str2P : struct, ILinearUnit<Str2P, En2P>
+            => Multiply(r, l);
+    }
 }

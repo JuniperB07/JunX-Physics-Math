@@ -144,6 +144,10 @@ namespace JunX.Physics.Thermodynamics
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
 
+        #region CROSS-UNIT OPERATORS
+        public static Energy operator *(Entropy l, Temperature r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        #endregion
     }
 
     public struct SpecificHeatCapacity :
@@ -279,5 +283,12 @@ namespace JunX.Physics.Thermodynamics
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
 
+        #region CROSS-UNIT OPERATORS
+        public static Entropy operator *(SpecificHeatCapacity l, Mass r)
+            => r * l;
+        public static QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> operator *(SpecificHeatCapacity l, Temperature r)
+            => new QuotientUnit<Energy, EnergyUnits, Mass, MassUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude)
+            .SetScales(Energy.BaseScale, Mass.BaseScale);
+        #endregion
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Quic;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -946,6 +947,7 @@ namespace JunX
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
         public (En1 Scale1, En2 Scale2) ScaleValues => (Original.Scale1, Original.Scale2);
+        public (int Dimension1, int Dimension2) HyperDimensions { get; private set; } = (1, 1);
 
         public Type Struct1 = typeof(Str1);
         public Type Struct2 = typeof(Str2);
@@ -998,6 +1000,12 @@ namespace JunX
             double mag = Original.Magnitude;
 
             Original = (mag, scale1, scale2, Unsafe.As<En1, int>(ref scale1), Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
+
+        public ProductUnit<Str1, En1, Str2, En2> SetHyperDimensions(int hyperD1, int hyperD2)
+        {
+            HyperDimensions = (hyperD1, hyperD2);
             return this;
         }
 
@@ -1417,6 +1425,7 @@ namespace JunX
 
         public (double Magnitude, En1 Scale1, En2 Scale2, int Scale1Ordinal, int Scale2Ordinal) Original { get; private set; }
         public (En1 Scale1, En2 Scale2) ScaleValues => (Original.Scale1, Original.Scale2);
+        public (int Dimension1, int Dimension2) HyperDimensions { get; private set; } = (1, 1);
 
         public Type Struct1 = typeof(Str1);
         public Type Struct2 = typeof(Str2);
@@ -1450,7 +1459,6 @@ namespace JunX
         public static QuotientUnit<Str1, En1, Str2, En2> Create(double magnitude) => new(magnitude);
         public static QuotientUnit<Str1, En1, Str2, En2> Create(double magnitude, En1 scale1) => new(magnitude, scale1);
 
-
         public QuotientUnit<Str1, En1, Str2, En2> SetScale1(En1 scale1)
         {
             (double mag, En2 s2, int s2Ord) orig = (Original.Magnitude, Original.Scale2, Original.Scale2Ordinal);
@@ -1470,6 +1478,12 @@ namespace JunX
             double mag = Original.Magnitude;
 
             Original = (mag, scale1, scale2, Unsafe.As<En1, int>(ref scale1), Unsafe.As<En2, int>(ref scale2));
+            return this;
+        }
+
+        public QuotientUnit<Str1, En1, Str2, En2> SetHyperDimensions(int d1, int d2)
+        {
+            HyperDimensions = (d1, d2);
             return this;
         }
 
@@ -1817,6 +1831,7 @@ namespace JunX
 
         public double Magnitude { get; private set; }
         public (En1 Scale1, En2 Scale2, En3 Scale3, int Ordinal1, int Ordinal2, int Ordinal3) Scales { get; private set; }
+        public (int Dimension1, int Dimension2, int Dimension3) HyperDimensions { get; private set; } = (1, 1, 1);
 
         public static En1 BaseScale1 => Str1.BaseScale;
         public static En2 BaseScale2 => Str2.BaseScale;
@@ -1833,14 +1848,18 @@ namespace JunX
         #endregion
 
         #region METHODS
-        public static TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3> Create(double magnitude) => new(magnitude);
-        
+        public static TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3> Create(double magnitude) => new(magnitude);        
         public TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3> SetScales(En1 scale1, En2 scale2, En3 scale3)
         {
             Scales = (scale1, scale2, scale3,
                 Unsafe.As<En1, int>(ref scale1),
                 Unsafe.As<En2, int>(ref scale2),
                 Unsafe.As<En3, int>(ref scale3));
+            return this;
+        }
+        public TernaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3> SetHyperDimensions(int d1, int d2, int d3)
+        {
+            HyperDimensions = (d1, d2, d3);
             return this;
         }
         #endregion
@@ -1934,6 +1953,7 @@ namespace JunX
 
         public double Magnitude { get; private set; }
         public (En1 Scale1, En2 Scale2, En3 Scale3, int Ordinal1, int Ordinal2, int Ordinal3) Scales { get; private set; }
+        public (int Dimension1, int Dimension2, int Dimension3) HyperDimensions { get; private set; } = (1, 1, 1);
 
         public static En1 BaseScale1 => Str1.BaseScale;
         public static En2 BaseScale2 => Str2.BaseScale;
@@ -1951,13 +1971,17 @@ namespace JunX
 
         #region METHODS
         public static TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> Create(double magnitude) => new(magnitude);
-
         public TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> SetScales(En1 scale1, En2 scale2, En3 scale3)
         {
             Scales = (scale1, scale2, scale3,
                 Unsafe.As<En1, int>(ref scale1),
                 Unsafe.As<En2, int>(ref scale2),
                 Unsafe.As<En3, int>(ref scale3));
+            return this;
+        }
+        public TernaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3> SetHyperDimensions(int d1, int d2, int d3)
+        {
+            HyperDimensions = (d1, d2, d3);
             return this;
         }
         #endregion
@@ -2082,6 +2106,7 @@ namespace JunX
         public (En1 Scale1, En2 Scale2, En3 Scale3, En4 Scale4,
             int Oridnal1, int Ordinal2, int Ordinal3, int Ordinal4) Scales
         { get; private set; }
+        public (int Dimension1, int Dimension2, int Dimension3, int Dimension4) HyperDimensions { get; private set; } = (1, 1, 1, 1);
         #endregion
 
         #region CONSTRUCTORS
@@ -2103,6 +2128,11 @@ namespace JunX
                 Unsafe.As<En2, int>(ref scale2),
                 Unsafe.As<En3, int>(ref scale3),
                 Unsafe.As<En4, int>(ref scale4));
+            return this;
+        }
+        public QuaternaryProductUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4> SetHyperDimensions(int d1, int d2, int d3, int d4)
+        {
+            HyperDimensions = (d1, d2, d3, d4);
             return this;
         }
         #endregion
@@ -2205,6 +2235,7 @@ namespace JunX
         public (En1 Scale1, En2 Scale2, En3 Scale3, En4 Scale4,
             int Oridnal1, int Ordinal2, int Ordinal3, int Ordinal4) Scales
         { get; private set; }
+        public (int Dimension1, int Dimension2, int Dimension3, int Dimension4) HyperDimensions { get; private set; } = (1, 1, 1, 1);
         #endregion
 
         #region CONSTRUCTORS
@@ -2226,6 +2257,11 @@ namespace JunX
                 Unsafe.As<En2, int>(ref scale2),
                 Unsafe.As<En3, int>(ref scale3),
                 Unsafe.As<En4, int>(ref scale4));
+            return this;
+        }
+        public QuaternaryQuotientUnit<TComp, Str1, En1, Str2, En2, Str3, En3, Str4, En4> SetHyperDimensions(int d1, int d2, int d3, int d4)
+        {
+            HyperDimensions = (d1, d2, d3, d4);
             return this;
         }
         #endregion

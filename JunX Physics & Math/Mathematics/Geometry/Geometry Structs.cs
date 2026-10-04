@@ -164,6 +164,94 @@ namespace JunX.Mathematics.Geometry
         public static Length Radius(Length diameter) => diameter / 2.0;
         #endregion
 
+        #region COMPOSITE TRANSPOSERS
+        public static ProductUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits> CompositeTranspose<Str, En>
+            (ProductUnit<Str, En, Area, AreaUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Area.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = ProductUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, Length.BaseScale);
+        }
+        public static QuotientUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits> CompositeTranspose<Str, En>
+            (QuotientUnit<Str, En, Area, AreaUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Area.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, Length.BaseScale);
+        }
+        public static QuotientUnit<UnitSquared<Length, LengthUnits>, LengthUnits, Str, En> CompositeTranspose<Str, En>
+            (QuotientUnit<Area, AreaUnits, Str, En> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale1 != Area.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<UnitSquared<Length, LengthUnits>, LengthUnits, Str, En>.Create(comp.Original.Magnitude);
+            return unit.SetScales(BaseScale, comp.Original.Scale2);
+        }
+
+        public static ProductUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits> CompositeTranspose<Str, En>
+            (ProductUnit<Str, En, Volume, VolumeUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Volume.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = ProductUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits> CompositeTranspose<Str, En>
+            (QuotientUnit<Str, En, Volume, VolumeUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Volume.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<UnitCubed<Length, LengthUnits>, LengthUnits, Str, En> CompositeTranspose<Str, En>
+            (QuotientUnit<Volume, VolumeUnits, Str, En> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale1 != Volume.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<UnitCubed<Length, LengthUnits>, LengthUnits, Str, En>.Create(comp.Original.Magnitude);
+            return unit.SetScales(BaseScale, comp.Original.Scale2);
+        }
+        #endregion
+
         #region OVERRIDES
         [Obsolete]
         public override bool Equals([NotNullWhen(true)] object? obj)
@@ -244,8 +332,9 @@ namespace JunX.Mathematics.Geometry
             => l.Original.Scale1 == MassUnits.Kilogram ?
             new(l.Original.Magnitude * r.Normalized.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.NON_NORMALIZED_OPERAND_SCALES);
-        
 
+        public static Energy operator *(Length l, Force r) => r * l;
+        
         #endregion
     }
 
@@ -469,6 +558,45 @@ namespace JunX.Mathematics.Geometry
             => 4.0 * Math.Pow(Math.PI, 2) * majorRadius * minorRadius;
         #endregion
 
+        #region COMPOSITE TRANSPOSERS
+        public static ProductUnit<Str, En, Area, AreaUnits> CompositeTranspose<Str, En>
+            (ProductUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = ProductUnit<Str, En, Area, AreaUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<Str, En, Area, AreaUnits> CompositeTranspose<Str, En>
+            (QuotientUnit<Str, En, UnitSquared<Length, LengthUnits>, LengthUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<Str, En, Area, AreaUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<Area, AreaUnits, Str, En> CompositeTranspose<Str, En>
+            (QuotientUnit<UnitSquared<Length, LengthUnits>, LengthUnits, Str, En> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+            => CompositeTranspose(comp.Reciprocate()).Reciprocate();
+        #endregion
+
         #region CONDITIONAL OPERATORS
         public static bool operator ==(Area l, Area r) => l.Equals(r);
         public static bool operator !=(Area l, Area r) => !l.Equals(r);
@@ -502,6 +630,42 @@ namespace JunX.Mathematics.Geometry
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         public static Length operator /(Area l, Length r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static TernaryQuotientUnit<
+            Numerator<CompositeProduct<Mass, Length>>,
+            Mass, MassUnits,
+            Length, LengthUnits,
+            UnitSquared<Time, TimeUnits>, TimeUnits> operator *
+            (TernaryQuotientUnit<
+                Denominator<CompositeProduct<Length, UnitSquared<Time, TimeUnits>>>,
+                Mass, MassUnits, 
+                Length, LengthUnits,
+                UnitSquared<Time, TimeUnits>, TimeUnits> l,
+            Area r)
+        {
+            if (l.Scales.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Normalized.Magnitude;
+            var unit = TernaryQuotientUnit<Numerator<CompositeProduct<Mass, Length>>, Mass, MassUnits, Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>.Create(mag);
+            return unit.SetScales(Mass.BaseScale, Length.BaseScale, Time.BaseScale);
+        }
+        public static TernaryQuotientUnit<
+            Numerator<CompositeProduct<Mass, Length>>,
+            Mass, MassUnits,
+            Length, LengthUnits,
+            UnitSquared<Time, TimeUnits>, TimeUnits> operator *
+            (Area l,
+            TernaryQuotientUnit<
+                Denominator<CompositeProduct<Length, UnitSquared<Time, TimeUnits>>>,
+                Mass, MassUnits,
+                Length, LengthUnits,
+                UnitSquared<Time, TimeUnits>, TimeUnits> r)
+            => r * l;
+
+        public static ProductUnit<Mass, MassUnits, Area, AreaUnits> operator *(Area l, Mass r) => r * l;
         #endregion
     }
 
@@ -686,6 +850,45 @@ namespace JunX.Mathematics.Geometry
             => (1.0 / 3.0) * height * (Base1 + Base2 + Area.FromUnitSquared((Base1 * Base2).Sqrt().ToUnitSquared()));
         public static Volume SphericalCap(Length baseRadius, Length height)
             => (1.0 / 6.0) * Math.PI * height * ((3 * baseRadius.Squared()) + height.Squared());
+        #endregion
+
+        #region COMPOSITE TRANSPOSERS
+        public static ProductUnit<Str, En, Volume, VolumeUnits> CompositeTranspose<Str, En>
+            (ProductUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = ProductUnit<Str, En, Volume, VolumeUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<Str, En, Volume, VolumeUnits> CompositeTranspose<Str, En>
+            (QuotientUnit<Str, En, UnitCubed<Length, LengthUnits>, LengthUnits> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+        {
+            if (comp.Original.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<Str, En, Volume, VolumeUnits>.Create(comp.Original.Magnitude);
+            return unit.SetScales(comp.Original.Scale1, BaseScale);
+        }
+        public static QuotientUnit<Volume, VolumeUnits, Str, En> CompositeTranspose<Str, En>
+            (QuotientUnit<UnitCubed<Length, LengthUnits>, LengthUnits, Str, En> comp)
+            where En : Enum
+            where Str : struct, IDimensionAccessible,
+                IInitializable<Str>, IInitializable<Str, double>, IInitializable<Str, double, En>,
+                INormalized<En>, INormalizable<Str>,
+                IScaleConvertible<Str, En>, IValueAccessible<En>
+            => CompositeTranspose(comp.Reciprocate()).Reciprocate();
         #endregion
 
         #region CONDITIONAL OPERATORS

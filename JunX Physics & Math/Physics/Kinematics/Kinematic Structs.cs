@@ -502,6 +502,12 @@ namespace JunX.Physics.Kinematics
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
         public static Time operator /(AngularVelocity l, AngularAcceleration r)
             => new(l.Normalized.Magnitude / r.Normalized.Magnitude);
+
+        public static Energy operator *(ProductUnit<Mass, MassUnits, Area, AreaUnits> l, AngularVelocity r)
+            => l.Original.Scale1 == Mass.BaseScale && l.Original.Scale2 == Area.BaseScale ?
+            new(l.Original.Magnitude * r.Normalized.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.NON_NORMALIZED_OPERAND_SCALES);
+        public static Energy operator *(AngularVelocity l, ProductUnit<Mass, MassUnits, Area, AreaUnits> r) => r * l;
         #endregion
     }
 

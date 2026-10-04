@@ -2,7 +2,9 @@
 using JunX.Mathematics.Geometry;
 using JunX.Physics.BaseUnits;
 using JunX.Physics.Electromagnetism;
+using JunX.Physics.FluidDynamics;
 using JunX.Physics.Kinematics;
+using JunX.Physics.Thermodynamics;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -122,14 +124,27 @@ namespace JunX.Physics.ClassicalMechanics
         public ProductUnit<Mass, MassUnits, Acceleration, AccelerationUnits> ToComposite()
             => new ProductUnit<Mass, MassUnits, Acceleration, AccelerationUnits>(Normalized.Magnitude)
             .SetScales(MassUnits.Kilogram, AccelerationUnits.MetersPerSecondSquared);
-        public TernaryProductUnit<CompositeQuotient<Length, UnitSquared<Time, TimeUnits>>, Mass, MassUnits, Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits> ToTernaryUnit()
-            => new TernaryProductUnit<CompositeQuotient<Length, UnitSquared<Time, TimeUnits>>, Mass, MassUnits, Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>(Normalized.Magnitude)
-            .SetScales(MassUnits.Kilogram, LengthUnits.Meter, TimeUnits.Second);
         public static Force FromComposite(ProductUnit<Mass, MassUnits, Acceleration, AccelerationUnits> composite)
             => composite.Original.Scale1 == MassUnits.Kilogram && composite.Original.Scale2 == AccelerationUnits.MetersPerSecondSquared ?
             new(composite.Original.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
-
+        
+        public TernaryQuotientUnit<
+            Numerator<CompositeProduct<Mass, Length>>,
+            Mass, MassUnits,
+            Length, LengthUnits,
+            UnitSquared<Time, TimeUnits>, TimeUnits> ToKilogramMeter_PerSecondSquared()
+            => new TernaryQuotientUnit<Numerator<CompositeProduct<Mass, Length>>, Mass, MassUnits, Length, LengthUnits, UnitSquared<Time, TimeUnits>, TimeUnits>(_N)
+            .SetScales(MassUnits.Kilogram, LengthUnits.Meter, TimeUnits.Second);
+        public static Force FromKilogramMeter_PerSecondSquared(TernaryQuotientUnit<
+            Numerator<CompositeProduct<Mass, Length>>,
+            Mass, MassUnits,
+            Length, LengthUnits,
+            UnitSquared<Time, TimeUnits>, TimeUnits> comp)
+            => comp.Scales.Scale1 == Mass.BaseScale && comp.Scales.Scale2 == Length.BaseScale && comp.Scales.Scale3 == Time.BaseScale ?
+            new(comp.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+        
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -174,6 +189,13 @@ namespace JunX.Physics.ClassicalMechanics
             => CurrentCarryingWireMagneticForce(electric, wire, fieldStrength) * Math.Sin(theta.As(AngleUnits.Radians));
         public static Force LorentzForce(ElectricCharge charge, QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> electricField, Velocity velocity, MagneticFluxDensity magneticField)
             => charge * (electricField + CompositeOperator.Multiply(velocity.ToComposite(), magneticField.ToNewtonSecond_PerCoulombMeter()));
+
+        public static Force BouyantForce(Density fluid, Volume displaced, Acceleration gravity)
+            => (fluid.ToComposite() * displaced) * gravity;
+        public static Force Drag(Density fluid, Velocity relativeSpeed, double dragCoefficient, Area referenceCrossSectionalArea)
+            => FromKilogramMeter_PerSecondSquared((fluid * relativeSpeed.Squared()) * (dragCoefficient * referenceCrossSectionalArea));
+        public static Force StokesLaw(DynamicViscosity fluid, Length radius, Velocity flowSpeed)
+            => 6.0 * Math.PI * fluid * radius * flowSpeed;
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -214,6 +236,8 @@ namespace JunX.Physics.ClassicalMechanics
             => new QuotientUnit<Force, ForceUnits, Length, LengthUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(BaseScale, Length.BaseScale);
         public static QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits> operator /(Force l, ElectricCharge r)
             => new QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(BaseScale, ElectricCharge.BaseScale);
+
+        public static Energy operator *(Force l, Length r) => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 
@@ -354,6 +378,13 @@ namespace JunX.Physics.ClassicalMechanics
             new(composite.Original.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
 
+        public ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits> ToKilogramSquareMeter_PerSecondSquared()
+            => new ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits>(_J).SetScales(Mass.BaseScale, Velocity.BaseScale);
+        public static Energy FromKilogramSquareMeter_PerSecondSquared(ProductUnit<Mass, MassUnits, UnitSquared<Velocity, VelocityUnits>, VelocityUnits> comp)
+            => comp.Original.Scale1 == Mass.BaseScale && comp.Original.Scale2 == Velocity.BaseScale ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -362,6 +393,38 @@ namespace JunX.Physics.ClassicalMechanics
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region DERIVATIONS
+        public static Energy Delta(Energy initial, Energy final) => final - initial;
+
+        public static Energy Kinetic_Translational(Mass m, Velocity v)
+            => 0.5 * FromKilogramSquareMeter_PerSecondSquared(m * v.Squared());
+        public static Energy Kinetic_Rotational(ProductUnit<Mass, MassUnits, Area, AreaUnits> inertia, AngularVelocity omega)
+            => 0.5 * inertia * omega;
+
+        public static Energy GravitationalPotential_NearSurface(Mass m, Acceleration gravity, Length height)
+            => m * gravity * height;
+        public static Energy GravitationalPotential_Universal((Mass Object1, Mass Object2) mass, Length radius)
+        {
+            var unit = (mass.Object1 * mass.Object2).Divide(radius, Length.BaseScale);
+            var unit2 = CompositeOperator.Multiply(Constants.GravitationalConstant, unit);
+            return FromComposite(unit2) * -1;
+        }
+
+        public static Energy ElasticPotential(QuotientUnit<Force, ForceUnits, Length, LengthUnits> springConstant, Length displacement)
+            => 0.5 * FromComposite(BinaryOperator.Multiply(springConstant, (displacement.Squared().ToUnitSquared(), Length.BaseScale)));
+        public static Energy TotalMechanical(Energy totalKinetic, Energy totalPotential) => totalKinetic + totalPotential;
+
+        public static Energy Work_ConstantForce(Force applied, Length displacement)
+            => applied * displacement;
+        public static Energy Work_ConstantForce(Force applied, Length displacement, Angle theta)
+            => applied * displacement * Math.Cos(theta.As(AngleUnits.Radians));
+        public static Energy NetWork(Energy initial, Energy final) => Delta(initial, final);
+
+        public static Energy Internal(Energy addedHeat, Energy workDone) => addedHeat - workDone;
+        public static Energy SensibleHeat(Mass m, SpecificHeatCapacity c, Temperature deltaT)
+            => m * c * deltaT;
         #endregion
 
         #region CONDITIONAL OPERATORS
