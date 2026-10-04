@@ -1,5 +1,7 @@
 ﻿using JunX.Mathematics.Geometry;
 using JunX.Physics.ClassicalMechanics;
+using JunX.Physics.Electromagnetism;
+using JunX.Physics.FluidDynamics;
 using JunX.Physics.Kinematics;
 using JunX.Physics.Thermodynamics;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -364,13 +366,13 @@ namespace JunX.Physics.BaseUnits
             => new ProductUnit<Mass, MassUnits, Area, AreaUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetScales(Mass.BaseScale, Area.BaseScale);
 
         public static Entropy operator *(Mass l, SpecificHeatCapacity r)
-            => new QuotientUnit<Energy, EnergyUnits, Temperature, TemperatureUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude)
-            .SetScales(Energy.BaseScale, Temperature.BaseScale);
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         public static Energy operator *(Mass l, QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> r)
             => r.Original.Scale2 == BaseScale ?
             new(l.Normalized.Magnitude * r.Original.Magnitude, r.Original.Scale1) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
         public static Energy operator *(QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> l, Mass r) => r * l;
+        public static QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> operator /(Mass l, Energy r) => r / l;
         #endregion
     }
 
@@ -474,6 +476,13 @@ namespace JunX.Physics.BaseUnits
         public HyperUnit<Current, CurrentUnits> Pow(int exp)
             => new HyperUnit<Current, CurrentUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
 
+        public QuotientUnit<ElectricCharge, ElectricChargeUnits, Time, TimeUnits> ToCoulomb_PerSecond()
+            => new QuotientUnit<ElectricCharge, ElectricChargeUnits, Time, TimeUnits>(_A).SetScales(ElectricCharge.BaseScale, Time.BaseScale);
+        public static Current FromCoulomb_PerSecond(QuotientUnit<ElectricCharge, ElectricChargeUnits, Time, TimeUnits> comp)
+            => comp.Original.Scale1 == ElectricCharge.BaseScale && comp.Original.Scale2 == Time.BaseScale ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -529,7 +538,6 @@ namespace JunX.Physics.BaseUnits
     /// </remarks>
     public struct Temperature :
         IInitializable<Temperature>, IInitializable<Temperature, double>, IInitializable<Temperature, double, TemperatureUnits>,
-        //IScaleMappable<CurrentUnits>, 
         IScaleConvertible<Temperature, TemperatureUnits>,
         INormalized<TemperatureUnits>, INormalizable<Temperature>,
         IDimensionAccessible,
@@ -657,6 +665,140 @@ namespace JunX.Physics.BaseUnits
             => r * l;
         public static Energy operator *(Temperature l, Entropy r)
             => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+        #endregion
+    }
+
+    public struct Substance :
+        IInitializable<Substance>, IInitializable<Substance, double>, IInitializable<Substance, double, SubstanceUnits>,
+        IScaleMappable<SubstanceUnits>, IScaleConvertible<Substance, SubstanceUnits>,
+        INormalized<SubstanceUnits>, INormalizable<Substance>,
+        IDimensionAccessible,
+        IValueAccessible<SubstanceUnits>,
+        IDuplicatable<Substance>,
+        IEquatable<Substance>,
+        IExponentiable<UnitSquared<Substance, SubstanceUnits>, UnitCubed<Substance, SubstanceUnits>, HyperUnit<Substance, SubstanceUnits>>,
+        ILinearUnit<Substance, SubstanceUnits>
+    {
+        private readonly double _mol = 0;
+
+        #region PROPERTIES
+        public int Dimension => 1;
+        public static Dictionary<SubstanceUnits, double> Mapper => new()
+        {
+            // SI & Metric System
+            { SubstanceUnits.Mole, 1.0 },
+            { SubstanceUnits.Kilomole, 1e3 },                            // 1 kmol = 1,000 mol
+            { SubstanceUnits.Megamole, 1e6 },                            // 1 Mmol = 1,000,000 mol
+            { SubstanceUnits.Gigamole, 1e9 },                            // 1 Gmol = 10^9 mol
+            { SubstanceUnits.Millimole, 1e-3 },                           // 1 mmol = 10^-3 mol
+            { SubstanceUnits.Micromole, 1e-6 },                           // 1 µmol = 10^-6 mol
+            { SubstanceUnits.Nanomole, 1e-9 },                            // 1 nmol = 10^-9 mol
+            { SubstanceUnits.Picomole, 1e-12 },                           // 1 pmol = 10^-12 mol
+            { SubstanceUnits.Femtomole, 1e-15 },                          // 1 fmol = 10^-15 mol
+            { SubstanceUnits.Attomole, 1e-18 },                           // 1 amol = 10^-18 mol
+            { SubstanceUnits.Zeptomole, 1e-21 },                          // 1 zmol = 10^-21 mol
+            { SubstanceUnits.Yoctomole, 1e-24 },                          // 1 ymol = 10^-24 mol
+
+            // Imperial & Chemical Engineering Units
+            { SubstanceUnits.PoundMole, 453.59237 },                      // 1 lb-mol = 453.59237 mol (exact)
+            { SubstanceUnits.OunceMole, 28.349523125 },                   // 453.59237 / 16 mol
+            { SubstanceUnits.MetricTonMole, 1e6 },                        // 1 tonne-mol = 1,000,000 mol
+            { SubstanceUnits.ShortTonMole, 907184.74 },                   // 2,000 * 453.59237 mol
+            { SubstanceUnits.LongTonMole, 1016046.9088 },                 // 2,240 * 453.59237 mol
+            { SubstanceUnits.GramMole, 1.0 },                             // Historical designation for 1 mol
+            { SubstanceUnits.KilogramMole, 1e3 },                         // Historical designation for 1 kmol
+
+            // Discrete Particle Counts & Natural Units
+            { SubstanceUnits.ElementaryEntity, 1.66053906660e-24 },       // 1 / N_A (1 / 6.02214076e23)
+            { SubstanceUnits.PlanckSubstance, 1.66053906660e-24 }         // 1 single particle count (1 / N_A)
+        };
+
+        public static SubstanceUnits BaseScale => SubstanceUnits.Mole;
+        public (double Magnitude, SubstanceUnits Scale, int ScaleOrdinal) Normalized => (_mol, BaseScale, (int)BaseScale);
+
+        public (double Magnitude, SubstanceUnits Scale, int ScaleOrdinal) Original { get; private set; } = (0, BaseScale, (int)BaseScale);
+        public (double Magnitude, SubstanceUnits Scale, int ScaleOrdinal) Converted { get; private set; } = (0, BaseScale, (int)BaseScale);
+        #endregion
+
+        #region CONSTRUCTORS
+        public Substance() { }
+        public Substance(Substance instance) => this = instance;
+        public Substance(double magnitude)
+        {
+            Original = (magnitude, BaseScale, (int)BaseScale);
+            _mol = magnitude;
+        }
+        public Substance(double magnitude, SubstanceUnits scale)
+        {
+            Original = (magnitude, scale, (int)scale);
+            _mol = Methods.Scale(magnitude, scale, Mapper) / Mapper[BaseScale];
+        }
+        #endregion
+
+        #region METHODS
+        public static Substance Initialize() => new();
+        public static Substance Create(Substance instance) => new(instance);
+        public static Substance Create(double magnitude) => new(magnitude);
+        public static Substance Create(double magnitude, SubstanceUnits scale) => new(magnitude, scale);
+
+        public Substance Duplicate() => new(this);
+        public bool Equals(Substance other) => Normalized.Magnitude == other.Normalized.Magnitude;
+
+        public Substance Convert(SubstanceUnits toScale)
+        {
+            double mag = Methods.Scale(Original.Magnitude, Original.Scale, Mapper) / Mapper[toScale];
+            Converted = (mag, toScale, (int)toScale);
+            return this;
+        }
+        public double As(SubstanceUnits scale) => Duplicate().Convert(scale).Converted.Magnitude;
+        public Substance Normalize()
+        {
+            Original = (Normalized.Magnitude, Normalized.Scale, Normalized.ScaleOrdinal);
+            return this;
+        }
+
+        public UnitSquared<Substance, SubstanceUnits> Squared() => this * this;
+        public UnitCubed<Substance, SubstanceUnits> Cubed() => this * this * this;
+        public HyperUnit<Substance, SubstanceUnits> Pow(int exp)
+            => new HyperUnit<Substance, SubstanceUnits>(Math.Pow(Normalized.Magnitude, exp)).SetDimension(exp);
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+        #endregion
+
+        #region CONDITIONAL OPERATORS
+        public static bool operator ==(Substance l, Substance r) => l.Equals(r);
+        public static bool operator !=(Substance l, Substance r) => !l.Equals(r);
+        public static bool operator <(Substance l, Substance r) => l.Normalized.Magnitude < r.Normalized.Magnitude;
+        public static bool operator >(Substance l, Substance r) => l.Normalized.Magnitude > r.Normalized.Magnitude;
+        public static bool operator <=(Substance l, Substance r) => l < r || l == r;
+        public static bool operator >=(Substance l, Substance r) => l > r || l == r;
+        #endregion
+
+        #region SELF ARITHMETIC OPERATORS
+        public static Substance operator +(Substance l, Substance r)
+            => new(l.Normalized.Magnitude + r.Normalized.Magnitude);
+        public static Substance operator -(Substance l, Substance r)
+            => new(l.Normalized.Magnitude - r.Normalized.Magnitude);
+        public static Substance operator *(Substance l, double r)
+            => new(l.Normalized.Magnitude * r);
+        public static Substance operator *(double l, Substance r) => r * l;
+        public static Substance operator /(Substance l, double r)
+            => new(l.Normalized.Magnitude / r);
+        #endregion
+
+        #region CROSS-DIMENSIONAL ARITHMETIC OPERATORS
+        public static UnitSquared<Substance, SubstanceUnits> operator *(Substance l, Substance r)
+            => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static double operator /(Substance l, Substance r)
+            => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
     }
 }

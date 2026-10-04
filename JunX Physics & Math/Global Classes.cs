@@ -44,6 +44,22 @@ namespace JunX
             UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits> CoulombConstant
             = new TernaryQuotientUnit<Numerator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>, Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits, UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits>(8.99e9)
             .SetScales(ForceUnits.Newton, LengthUnits.Meter, ElectricChargeUnits.Coulomb);
+
+        public static readonly TernaryQuotientUnit<
+            Denominator<CompositeProduct<Substance, Temperature>>,
+            Energy, EnergyUnits,
+            Substance, SubstanceUnits,
+            Temperature, TemperatureUnits> UniversalGasConstant
+            = new TernaryQuotientUnit<Denominator<CompositeProduct<Substance, Temperature>>, Energy, EnergyUnits, Substance, SubstanceUnits, Temperature, TemperatureUnits>(8.314)
+            .SetScales(EnergyUnits.Joule, SubstanceUnits.Mole, TemperatureUnits.Kelvin);
+
+        public static readonly TernaryQuotientUnit<
+            Denominator<CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>,
+            UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits,
+            Force, ForceUnits,
+            UnitSquared<Length, LengthUnits>, LengthUnits> FreeSpacePermittivity
+            = new TernaryQuotientUnit<Denominator<JunX.CompositeProduct<Force, UnitSquared<Length, LengthUnits>>>, UnitSquared<ElectricCharge, ElectricChargeUnits>, ElectricChargeUnits, Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits>(8.854e-12)
+            .SetScales(ElectricChargeUnits.Coulomb, ForceUnits.Newton, LengthUnits.Meter);
     }
 
     /// <summary>
@@ -1460,6 +1476,7 @@ namespace JunX
     { }
     #endregion
 
+    #region COMPOSITES
     /// <summary>
     /// Represents a composite unit structure formed by the dimensional product of two concrete value-type units.
     /// </summary>
@@ -1517,6 +1534,8 @@ namespace JunX
         where TComp1 : class, ICompositeUnit
         where TComp2 : class, ICompositeUnit
     { }
+    public class CompositeNull : ICompositeUnit { }
+    #endregion
 
     public class BinaryOperator
     {
@@ -1551,5 +1570,82 @@ namespace JunX
             where Str2 : struct, ILinearUnit<Str2, En2>
             where Str2P : struct, ILinearUnit<Str2P, En2P>
             => Multiply(r, l);
+
+        //  A'B =   A / (A'/B)
+        //  Where A = A'^2 and A' = Sqrt(A)
+        //  Where A and A' have the same base unit
+        public static ProductUnit<Str1P, En1, Str2, En2> Divide<Str1, En1, Str2, En2, Str1P>
+            (Str1 l, QuotientUnit<Str1P, En1, Str2, En2> r)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str1P : struct, ILinearUnit<Str1P, En1>
+        {
+            if (typeof(Str1) != typeof(UnitSquared<Str1P, En1>))
+                throw new InvalidOperationException(ErrorMsg.GENERIC_PARAMETER_TYPE_MISMATCH);
+
+            if (l.Normalized.ScaleOrdinal != r.Original.Scale1Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Normalized.Magnitude / r.Original.Magnitude;
+            var unit = ProductUnit<Str1P, En1, Str2, En2>.Create(mag);
+            return unit.SetScales(r.Original.Scale1, r.Original.Scale2);
+        }
+    }
+
+    public class TernaryOperator
+    {
+        //  ABC'    =   AB/C' * C
+        //  Where C = C'^2 and C' = Sqrt(C)
+        //  Where C.BaseUnit == C'.BaseUnit
+        public static TernaryProductUnit<
+            CompositeNull,
+            Str1, En1, Str2, En2, Str3P, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str3P>
+            (TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3P, En3> l,
+            Str3 r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str3P : struct, ILinearUnit<Str3P, En3>
+        {
+            if (typeof(Str3) != typeof(UnitSquared<Str3P, En3>))
+                throw new InvalidOperationException(ErrorMsg.GENERIC_PARAMETER_TYPE_MISMATCH);
+
+            if (l.Scales.Ordinal3 != r.Normalized.ScaleOrdinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Normalized.Magnitude;
+            var unit = TernaryProductUnit<CompositeNull, Str1, En1, Str2, En2, Str3P, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2, l.Scales.Scale3);
+        }
+        public static TernaryProductUnit<
+            CompositeNull,
+            Str1, En1, Str2, En2, Str3P, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str3P>
+            (Str3 l,
+            TernaryQuotientUnit<Numerator<CompositeProduct<Str1, Str2>>, Str1, En1, Str2, En2, Str3P, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str3P : struct, ILinearUnit<Str3P, En3>
+            => Multiply(r, l);
+    }
+
+    public class CompositeSimplifier
+    {
+        public static ProductUnit<ElectricPotential, ElectricPotentialUnits, ElectricCharge, ElectricChargeUnits> Simplify
+            (TernaryProductUnit<CompositeNull,
+                ElectricPotential, ElectricPotentialUnits,
+                Time, TimeUnits,
+                Current, CurrentUnits> comp)
+            => comp.Scales.Scale1 == ElectricPotential.BaseScale && comp.Scales.Scale2 == Time.BaseScale && comp.Scales.Scale3 == Current.BaseScale ?
+            new ProductUnit<ElectricPotential, ElectricPotentialUnits, ElectricCharge, ElectricChargeUnits>(comp.Magnitude).SetScales(ElectricPotential.BaseScale, ElectricCharge.BaseScale) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
     }
 }

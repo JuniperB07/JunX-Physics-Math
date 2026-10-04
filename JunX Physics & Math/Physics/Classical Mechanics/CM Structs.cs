@@ -425,6 +425,39 @@ namespace JunX.Physics.ClassicalMechanics
         public static Energy Internal(Energy addedHeat, Energy workDone) => addedHeat - workDone;
         public static Energy SensibleHeat(Mass m, SpecificHeatCapacity c, Temperature deltaT)
             => m * c * deltaT;
+        public static Energy LatentHeat(Mass m, QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> specificLatentHeat)
+            => m * specificLatentHeat;
+        public static Energy IdealGasThermalInternal_Monatomic(Substance moles, Temperature T)
+            => (3.0 / 2.0) * CompositeOperator.Multiply(moles, Constants.UniversalGasConstant) * T;
+        public static Energy IdealGasThermalInternal_Monatomic(double moleculeCount, Temperature T)
+            => (3.0 / 2.0) * Constants.Boltzmann * T;
+        
+        public static Energy ElectricPotential_TwoPointCharges((ElectricCharge Charge1, ElectricCharge Charge2) charges, Length distance)
+        {
+            var unit = (charges.Charge1 * charges.Charge2).Divide(distance, Length.BaseScale);
+            var unit2 = CompositeOperator.Multiply(Constants.CoulombConstant, unit);
+            return FromComposite(unit2);
+        }
+        public static Energy InCapacitor(Capacitance C, ElectricPotential V)
+            => 0.5 * Simplify(BinaryOperator.Multiply(C.ToComposite(), (V.Squared(), ElectricPotential.BaseScale)));
+        public static Energy InCapacitor(ElectricCharge accumulated, ElectricPotential V)
+            => 0.5 * Simplify(accumulated * V);
+        public static Energy InCapacitor(ElectricCharge accumulated, Capacitance C)
+            => Simplify(BinaryOperator.Divide(accumulated.Squared(), 2 * C.ToComposite()));
+        public static Energy InInductor(Inductance L, Current I)
+        {
+            var unit = TernaryOperator.Multiply(L.ToVoltSecond_PerAmpere(), I);
+            return Simplify(CompositeSimplifier.Simplify(unit).Commute()) * 0.5;
+        }
+
+
+        #endregion
+
+        #region SIMPLIFIERS
+        public static Energy Simplify(ProductUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> comp)
+            => comp.Original.Scale1 == ElectricCharge.BaseScale && comp.Original.Scale2 == ElectricPotential.BaseScale ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -454,6 +487,11 @@ namespace JunX.Physics.ClassicalMechanics
 
         public static double operator /(Energy l, Energy r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> operator /(Energy l, Mass r)
+            => new QuotientUnit<Energy, EnergyUnits, Mass, MassUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(Energy.BaseScale, Mass.BaseScale);
         #endregion
     }
 

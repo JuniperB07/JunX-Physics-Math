@@ -151,6 +151,11 @@ namespace JunX.Physics.Electromagnetism
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
 
+        #region CROSS-UNIT OPERATORS
+        public static ProductUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> operator *(ElectricCharge l, ElectricPotential r)
+            => new ProductUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits>(l.Normalized.Magnitude * r.Normalized.Magnitude).SetScales(BaseScale, ElectricPotential.BaseScale);
+        #endregion
+
     }
 
     public struct ElectricPotential :
@@ -286,6 +291,11 @@ namespace JunX.Physics.Electromagnetism
 
         public static double operator /(ElectricPotential l, ElectricPotential r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static ProductUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> operator *(ElectricPotential l, ElectricCharge r)
+            => r * l;
         #endregion
     }
 
@@ -932,9 +942,10 @@ namespace JunX.Physics.Electromagnetism
             => comp.Original.Scale1 == ElectricResistanceUnits.Ohm && comp.Original.Scale2 == TimeUnits.Second ?
             new(comp.Original.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
-        public TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, Current, CurrentUnits> ToVoltSecondPerAmpere()
+        public TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, Current, CurrentUnits> ToVoltSecond_PerAmpere()
             => new TernaryQuotientUnit<Numerator<CompositeProduct<ElectricPotential, Time>>, ElectricPotential, ElectricPotentialUnits, Time, TimeUnits, Current, CurrentUnits>(_H)
             .SetScales(ElectricPotentialUnits.Volt, TimeUnits.Second, CurrentUnits.Ampere);
+
 
         public UnitSquared<Inductance, InductanceUnits> Squared() => this * this;
         public UnitCubed<Inductance, InductanceUnits> Cubed() => this * this * this;

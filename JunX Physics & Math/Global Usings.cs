@@ -1,0 +1,3 @@
+﻿global using FreeSpacePermeability = JunX.QuotientUnit<JunX.Physics.ClassicalMechanics.Force, JunX.Physics.ClassicalMechanics.ForceUnits, JunX.UnitSquared<JunX.Physics.BaseUnits.Current, JunX.Physics.BaseUnits.CurrentUnits>, JunX.Physics.BaseUnits.CurrentUnits>;
+global using ElectricField = JunX.QuotientUnit<JunX.Physics.Electromagnetism.ElectricPotential, JunX.Physics.Electromagnetism.ElectricPotentialUnits, JunX.Mathematics.Geometry.Length, JunX.Mathematics.Geometry.LengthUnits>;
+global using EnergyDensity = JunX.QuotientUnit<JunX.Physics.ClassicalMechanics.Energy, JunX.Physics.ClassicalMechanics.EnergyUnits, JunX.Mathematics.Geometry.Volume, JunX.Mathematics.Geometry.VolumeUnits>;

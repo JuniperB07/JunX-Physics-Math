@@ -88,4 +88,28 @@ namespace JunX.Physics.BaseUnits
         Fahrenheit
     }
 
+    public enum SubstanceUnits
+    {
+        Mole,
+        Kilomole,
+        Megamole,
+        Gigamole,
+        Millimole,
+        Micromole,
+        Nanomole,
+        Picomole,
+        Femtomole,
+        Attomole,
+        Zeptomole,
+        Yoctomole,
+        PoundMole,
+        OunceMole,
+        MetricTonMole,
+        ShortTonMole,
+        LongTonMole,
+        GramMole,
+        KilogramMole,
+        ElementaryEntity,
+        PlanckSubstance
+    }
 }
