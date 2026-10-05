@@ -520,6 +520,10 @@ namespace JunX.Physics.BaseUnits
 
         public static double operator /(Current l, Current r) => l.Normalized.Magnitude / r.Normalized.Magnitude;
         #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Power operator *(Current l, ElectricPotential r) => r * l;
+        #endregion
     }
 
     /// <summary>

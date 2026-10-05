@@ -1827,7 +1827,7 @@ namespace JunX
 
     public class CompositeTransposer
     {
-        public static QuotientUnit<Energy, EnergyUnits, UnitCubed<Length, LengthUnits>, LengthUnits> Transpose(
+        public static EnergyDensity Transpose(
             QuotientUnit<Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits> from)
         {
             if (from.Original.Scale1 != Force.BaseScale || from.Original.Scale2 != Length.BaseScale)

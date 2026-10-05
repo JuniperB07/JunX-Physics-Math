@@ -1,5 +1,6 @@
 ﻿using JunX.Mathematics;
 using JunX.Mathematics.Geometry;
+using JunX.Mathematics.Statistics;
 using JunX.Physics.BaseUnits;
 using JunX.Physics.Electromagnetism;
 using JunX.Physics.FluidDynamics;
@@ -238,6 +239,8 @@ namespace JunX.Physics.ClassicalMechanics
             => new QuotientUnit<Force, ForceUnits, ElectricCharge, ElectricChargeUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(BaseScale, ElectricCharge.BaseScale);
 
         public static Energy operator *(Force l, Length r) => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
+
+        public static Power operator *(Force l, Velocity r) => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 
@@ -459,7 +462,7 @@ namespace JunX.Physics.ClassicalMechanics
         }
         public static EnergyDensity MagneticEnergyDensity(MagneticFluxDensity B, FreeSpacePermeability mu0)
         {
-            var unit = TernaryOperator.Multiply(B.ToNewton_PerAmpereMeter().Squared(), mu0.Reciprocate());
+            var unit = TernaryOperator.Multiply(B.ToNewton_PerAmpereMeter().Squared(), (2.0 * mu0).Reciprocate());
             return CompositeTransposer.Transpose(unit);
         }
         public static EnergyDensity ElectromagneticFieldEnergyDensity(EnergyDensity electricEnergyDensity, EnergyDensity magneticEnergyDensity)
@@ -507,6 +510,9 @@ namespace JunX.Physics.ClassicalMechanics
         #region CROSS-UNIT OPERATORS
         public static QuotientUnit<Energy, EnergyUnits, Mass, MassUnits> operator /(Energy l, Mass r)
             => new QuotientUnit<Energy, EnergyUnits, Mass, MassUnits>(l.Normalized.Magnitude / r.Normalized.Magnitude).SetScales(Energy.BaseScale, Mass.BaseScale);
+
+        public static Power operator /(Energy l, Time r)
+            => new Power(l.Normalized.Magnitude / r.Normalized.Magnitude);
         #endregion
     }
 
@@ -629,6 +635,13 @@ namespace JunX.Physics.ClassicalMechanics
             new(composite.Original.Magnitude) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
 
+        public ProductUnit<Current, CurrentUnits, ElectricPotential, ElectricPotentialUnits> ToAmpVolts()
+            => new ProductUnit<Current, CurrentUnits, ElectricPotential, ElectricPotentialUnits>(_W).SetScales(Current.BaseScale, ElectricPotential.BaseScale);
+        public static Power FromAmpVolts(ProductUnit<Current, CurrentUnits, ElectricPotential, ElectricPotentialUnits> comp)
+            => comp.Original.Scale1 == Current.BaseScale && comp.Original.Scale2 == ElectricPotential.BaseScale ?
+            new(comp.Original.Magnitude) :
+            throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return base.Equals(obj);
@@ -637,6 +650,38 @@ namespace JunX.Physics.ClassicalMechanics
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region DERIVATIONS
+        public static Power AverageMechanical(Energy work, Time interval) => work / interval;
+        public static Power FromLinearForceAndVelocity(Force FVector, Velocity vVector) => FVector * vVector;
+        public static Power Rotational(Torque tau, AngularVelocity omega) => tau * omega;
+
+        public static Power ElectricPower(ElectricPotential V, ElectricCurrent I) => V * I;
+        public static Power ResistiveCircuit(Current throughResistor, ElectricResistance R)
+        {
+            var unit = BinaryOperator.Multiply((throughResistor.Squared(), Current.BaseScale), R.ToComposite());
+            return FromAmpVolts(unit.Commute());
+        }
+        public static Power ResistiveCircuit(ElectricPotential voltageDrop, ElectricResistance R)
+        {
+            var unit = BinaryOperator.Multiply((voltageDrop.Squared(), ElectricPotential.BaseScale), R.ToComposite().Reciprocate());
+            return FromAmpVolts(unit);
+        }
+        public static Power ActivePower(ElectricPotential[] voltages, ElectricCurrent[] currents, Angle phase)
+            => StatisticsSolver.RootMeanSquare(voltages, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currents, Current.BaseScale) * Math.Cos(phase.As(AngleUnits.Radians));
+        public static Power ActivePower(ElectricPotential voltagePeak, ElectricCurrent currentPeak, Angle phase)
+            => StatisticsSolver.RootMeanSquare(voltagePeak, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currentPeak, Current.BaseScale) * Math.Cos(phase.As(AngleUnits.Radians));
+        public static Power ReactivePower(ElectricPotential[] voltages, ElectricCurrent[] currents, Angle phase)
+            => StatisticsSolver.RootMeanSquare(voltages, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currents, Current.BaseScale) * Math.Sin(phase.As(AngleUnits.Radians));
+        public static Power ReactivePower(ElectricPotential voltagePeak, ElectricCurrent currentPeak, Angle phase)
+            => StatisticsSolver.RootMeanSquare(voltagePeak, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currentPeak, Current.BaseScale) * Math.Sin(phase.As(AngleUnits.Radians));
+        public static Power ApparentPower(ElectricPotential[] voltages, ElectricCurrent[] currents)
+            => StatisticsSolver.RootMeanSquare(voltages, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currents, Current.BaseScale);
+        public static Power ApparentPower(ElectricPotential voltagePeak, ElectricCurrent currentPeak)
+            => StatisticsSolver.RootMeanSquare(voltagePeak, ElectricPotential.BaseScale) * StatisticsSolver.RootMeanSquare(currentPeak, Current.BaseScale);
+        public static Power ApparentPower(Power real, Power reactive) => (real.Squared() + reactive.Squared()).Sqrt();
+
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -803,6 +848,10 @@ namespace JunX.Physics.ClassicalMechanics
         {
             return base.GetHashCode();
         }
+        #endregion
+
+        #region DERIVATIONS
+        public static Pressure Delta(Pressure initial, Pressure final) => final - initial;
         #endregion
 
         #region CONDITIONAL OPERATORS
@@ -1293,6 +1342,10 @@ namespace JunX.Physics.ClassicalMechanics
 
         public static double operator /(Torque l, Torque r)
             => l.Normalized.Magnitude / r.Normalized.Magnitude;
+        #endregion
+
+        #region CROSS-UNIT OPERATORS
+        public static Power operator *(Torque l, AngularVelocity r) => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 

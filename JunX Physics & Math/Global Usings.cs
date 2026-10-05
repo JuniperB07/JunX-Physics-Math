@@ -1,4 +1,8 @@
-﻿#region BINARY COMPOSITE UNITS
+﻿#region UNIT ALIASES
+global using ElectricCurrent = JunX.Physics.BaseUnits.Current;
+#endregion
+
+#region BINARY COMPOSITE UNITS
 global using FreeSpacePermeability = JunX.QuotientUnit<JunX.Physics.ClassicalMechanics.Force, JunX.Physics.ClassicalMechanics.ForceUnits, JunX.UnitSquared<JunX.Physics.BaseUnits.Current, JunX.Physics.BaseUnits.CurrentUnits>, JunX.Physics.BaseUnits.CurrentUnits>;
 global using ElectricField = JunX.QuotientUnit<JunX.Physics.Electromagnetism.ElectricPotential, JunX.Physics.Electromagnetism.ElectricPotentialUnits, JunX.Mathematics.Geometry.Length, JunX.Mathematics.Geometry.LengthUnits>;
 global using EnergyDensity = JunX.QuotientUnit<JunX.Physics.ClassicalMechanics.Energy, JunX.Physics.ClassicalMechanics.EnergyUnits, JunX.UnitCubed<JunX.Mathematics.Geometry.Length, JunX.Mathematics.Geometry.LengthUnits>, JunX.Mathematics.Geometry.LengthUnits>;
@@ -74,27 +78,6 @@ global using NewtonSquaredMeterSquared_PerNewtonSquareMeterSquared = JunX.Quater
         JunX.UnitSquared<
             JunX.Mathematics.Geometry.Length,
             JunX.Mathematics.Geometry.LengthUnits>,
-        JunX.Mathematics.Geometry.LengthUnits>,
-    JunX.Mathematics.Geometry.LengthUnits>;
-#endregion
-
-#region INTERMEDIARY UNIT: Tesla^2
-global using TeslaSquared = JunX.TernaryQuotientUnit<
-    JunX.SquaredComposite<
-        JunX.Denominator<
-            JunX.CompositeProduct<
-                JunX.Physics.BaseUnits.Current,
-                JunX.Mathematics.Geometry.Length>>>,
-    JunX.UnitSquared<
-        JunX.Physics.ClassicalMechanics.Force,
-        JunX.Physics.ClassicalMechanics.ForceUnits>,
-    JunX.Physics.ClassicalMechanics.ForceUnits,
-    JunX.UnitSquared<
-        JunX.Physics.BaseUnits.Current,
-        JunX.Physics.BaseUnits.CurrentUnits>,
-    JunX.Physics.BaseUnits.CurrentUnits,
-    JunX.UnitSquared<
-        JunX.Mathematics.Geometry.Length,
         JunX.Mathematics.Geometry.LengthUnits>,
     JunX.Mathematics.Geometry.LengthUnits>;
 #endregion

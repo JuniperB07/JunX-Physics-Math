@@ -296,6 +296,8 @@ namespace JunX.Physics.Electromagnetism
         #region CROSS-UNIT OPERATORS
         public static ProductUnit<ElectricCharge, ElectricChargeUnits, ElectricPotential, ElectricPotentialUnits> operator *(ElectricPotential l, ElectricCharge r)
             => r * l;
+
+        public static Power operator *(ElectricPotential l, Current r) => new(l.Normalized.Magnitude * r.Normalized.Magnitude);
         #endregion
     }
 
