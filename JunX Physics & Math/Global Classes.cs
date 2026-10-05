@@ -11,6 +11,7 @@ using System.Collections.Immutable;
 using System.Data.SqlTypes;
 using System.Net.Quic;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.XPath;
 
@@ -112,6 +113,7 @@ namespace JunX
         public const string NON_INVERSE_RECIPROCAL = "ReciprocalUnit numerator value is not 1.";
         public const string NON_NORMALIZED_OPERAND_SCALES = "Scale values of both operands must all be normalized.";
         public const string GENERIC_PARAMETER_TYPE_MISMATCH = "Parameter generic types does not match the requirement.";
+        public const string NON_SIMPLIFIABLE_COMPOSITE_UNIT = "Composite unit cannot be simplified. Make sure the type parameters are correct.";
 
         public static string Insufficient_Array_Length(int minimumLength)
             => $"Array length must not be less than {minimumLength}.";
@@ -1535,6 +1537,12 @@ namespace JunX
         where TComp2 : class, ICompositeUnit
     { }
     public class CompositeNull : ICompositeUnit { }
+    public sealed class SquaredComposite<TComp> : DivisionOperands, ICompositeUnit
+    where TComp : class, ICompositeUnit
+    { }
+    public sealed class CubedComposite<TComp> : DivisionOperands, ICompositeUnit
+        where TComp : class, ICompositeUnit
+    { }
     #endregion
 
     public class BinaryOperator
@@ -1594,6 +1602,51 @@ namespace JunX
         }
     }
 
+    public class BinaryRooter
+    {
+        public static ProductUnit<Str1, En1, Str2, En2> SquareRoot<Str1, En1, Str2, En2>
+            (ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> squared)
+            where En1: Enum
+            where En2: Enum
+            where Str1: struct, ILinearUnit<Str1, En1>
+            where Str2: struct, ILinearUnit<Str2, En2>
+        {
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(Math.Sqrt(squared.Original.Magnitude));
+            return unit.SetScales(squared.Original.Scale1, squared.Original.Scale2);
+        }
+        public static ProductUnit<Str1, En1, Str2, En2> CubeRoot<Str1, En1, Str2, En2>
+            (ProductUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2> cubed)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            var unit = ProductUnit<Str1, En1, Str2, En2>.Create(Math.Pow(cubed.Original.Magnitude, (1.0 / 3.0)));
+            return unit.SetScales(cubed.Original.Scale1, cubed.Original.Scale2);
+        }
+
+        public static QuotientUnit<Str1, En1, Str2, En2> SquareRoot<Str1, En1, Str2, En2>
+            (QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> squared)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(Math.Sqrt(squared.Original.Magnitude));
+            return unit.SetScales(squared.Original.Scale1, squared.Original.Scale2);
+        }
+        public static QuotientUnit<Str1, En1, Str2, En2> CubeRoot<Str1, En1, Str2, En2>
+            (QuotientUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2> cubed)
+            where En1 : Enum
+            where En2 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+        {
+            var unit = QuotientUnit<Str1, En1, Str2, En2>.Create(Math.Pow(cubed.Original.Magnitude, (1.0 / 3.0)));
+            return unit.SetScales(cubed.Original.Scale1, cubed.Original.Scale2);
+        }
+    }
+
     public class TernaryOperator
     {
         //  ABC'    =   AB/C' * C
@@ -1635,6 +1688,124 @@ namespace JunX
             where Str3 : struct, ILinearUnit<Str3, En3>
             where Str3P : struct, ILinearUnit<Str3P, En3>
             => Multiply(r, l);
+
+        //  A'/C    =   A/BC * B/A'
+        //  Where A = A'^2
+        //  Where A * A' have the same base unit
+        //  Where B is Squared Unit
+        //  Where C is Squared Unit
+        public static QuotientUnit<Str1P, En1, UnitSquared<Str3, En3>, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str1P>
+            (TernaryQuotientUnit<
+                SquaredComposite<Denominator<CompositeProduct<Str2, Str3>>>,
+                UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2, UnitSquared<Str3, En3>, En3> l,
+            QuotientUnit<UnitSquared<Str2, En2>, En2, Str1P, En1> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str1P : struct, ILinearUnit<Str1P, En1>
+        {
+            if (typeof(Str1) != typeof(UnitSquared<Str1P, En1>))
+                throw new InvalidOperationException(ErrorMsg.GENERIC_PARAMETER_TYPE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = QuotientUnit<Str1P, En1, UnitSquared<Str3, En3>, En3>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale3);
+        }
+        public static QuotientUnit<Str1P, En1, UnitSquared<Str3, En3>, En3> Multiply<Str1, En1, Str2, En2, Str3, En3, Str1P>
+            (QuotientUnit<UnitSquared<Str2, En2>, En2, Str1P, En1> l,
+            TernaryQuotientUnit<
+                SquaredComposite<Denominator<CompositeProduct<Str2, Str3>>>,
+                UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2, UnitSquared<Str3, En3>, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str1P : struct, ILinearUnit<Str1P, En1>
+            => Multiply(r, l);
+    }
+
+    public class QuaternaryOperator
+    {
+        public static QuaternaryQuotientUnit<
+            BinaryComposite<
+                Numerator<CompositeProduct<Str1, Str4>>,
+                Denominator<CompositeProduct<Str2, UnitSquared<Str3, En3>>>>,
+            Str1, En1, Str2, En2, UnitSquared<Str3, En3>, En3, Str4, En4> Multiply<Str1, En1, Str2, En2, Str3, En3, Str4, En4>
+            (TernaryQuotientUnit<
+                Denominator<CompositeProduct<Str2, Str3>>,
+                Str1, En1, Str2, En2, Str3, En3> l,
+            QuotientUnit<Str4, En4, Str3, En3> r)
+            where En1: Enum
+            where En2: Enum
+            where En3: Enum
+            where En4: Enum
+            where Str1: struct, ILinearUnit<Str1, En1>
+            where Str2: struct, ILinearUnit<Str2, En2>
+            where Str3: struct, ILinearUnit<Str3, En3>
+            where Str4: struct, ILinearUnit<Str4, En4>
+        {
+            if (l.Scales.Ordinal3 != r.Original.Scale2Ordinal)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_UNIT_SCALE_MISMATCH);
+
+            double mag = l.Magnitude * r.Original.Magnitude;
+            var unit = QuaternaryQuotientUnit<
+                        BinaryComposite<
+                            Numerator<CompositeProduct<Str1, Str4>>,
+                            Denominator<CompositeProduct<Str2, UnitSquared<Str3, En3>>>>,
+                        Str1, En1, Str2, En2, UnitSquared<Str3, En3>, En3, Str4, En4>.Create(mag);
+            return unit.SetScales(l.Scales.Scale1, l.Scales.Scale2, l.Scales.Scale3, r.Original.Scale1);
+        }
+        public static QuaternaryQuotientUnit<
+            BinaryComposite<
+                Numerator<CompositeProduct<Str1, Str4>>,
+                Denominator<CompositeProduct<Str2, UnitSquared<Str3, En3>>>>,
+            Str1, En1, Str2, En2, UnitSquared<Str3, En3>, En3, Str4, En4> Multiply<Str1, En1, Str2, En2, Str3, En3, Str4, En4>
+            (QuotientUnit<Str4, En4, Str3, En3> l,
+            TernaryQuotientUnit<
+                Denominator<CompositeProduct<Str2, Str3>>,
+                Str1, En1, Str2, En2, Str3, En3> r)
+            where En1 : Enum
+            where En2 : Enum
+            where En3 : Enum
+            where En4 : Enum
+            where Str1 : struct, ILinearUnit<Str1, En1>
+            where Str2 : struct, ILinearUnit<Str2, En2>
+            where Str3 : struct, ILinearUnit<Str3, En3>
+            where Str4 : struct, ILinearUnit<Str4, En4>
+            => Multiply(r, l);
+    }
+
+    public class QuaternarySimplifier
+    {
+        //  A'/B' =   AB/CD   =   AB'/A'B
+        //  Where   A = A'^2 & B = B'^2
+        //  Where A, A' have the same base unit
+        //  Where B, B' have the same base unit
+        public static QuotientUnit<Str1P, En1, Str2P, En2> Simplify<Str1, En1, Str2, En2, Str1P, Str2P>
+            (QuaternaryQuotientUnit<
+                BinaryComposite<
+                    Numerator<CompositeProduct<Str1, Str2P>>,
+                    Denominator<CompositeProduct<Str1P, Str2>>>,
+                Str1, En1, Str2P, En2, Str1P, En1, Str2, En2> from)
+            where En1: Enum
+            where En2: Enum
+            where Str1: struct, ILinearUnit<Str1, En1>
+            where Str2: struct, ILinearUnit<Str2, En2>
+            where Str1P: struct, ILinearUnit<Str1P, En1>
+            where Str2P: struct, ILinearUnit<Str2P, En2>
+        {
+            if (typeof(Str1) != typeof(UnitSquared<Str1P, En1>) ||
+                typeof(Str2) != typeof(UnitSquared<Str2P, En2>))
+                throw new InvalidOperationException(ErrorMsg.NON_SIMPLIFIABLE_COMPOSITE_UNIT);
+
+            var unit = QuotientUnit<Str1P, En1, Str2P, En2>.Create(from.Magnitude);
+            return unit.SetScales(from.Scales.Scale1, from.Scales.Scale2);
+        }
     }
 
     public class CompositeSimplifier
@@ -1647,5 +1818,38 @@ namespace JunX
             => comp.Scales.Scale1 == ElectricPotential.BaseScale && comp.Scales.Scale2 == Time.BaseScale && comp.Scales.Scale3 == Current.BaseScale ?
             new ProductUnit<ElectricPotential, ElectricPotentialUnits, ElectricCharge, ElectricChargeUnits>(comp.Magnitude).SetScales(ElectricPotential.BaseScale, ElectricCharge.BaseScale) :
             throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+    }
+
+    public class CompositeExpander
+    {
+
+    }
+
+    public class CompositeTransposer
+    {
+        public static QuotientUnit<Energy, EnergyUnits, UnitCubed<Length, LengthUnits>, LengthUnits> Transpose(
+            QuotientUnit<Force, ForceUnits, UnitSquared<Length, LengthUnits>, LengthUnits> from)
+        {
+            if (from.Original.Scale1 != Force.BaseScale || from.Original.Scale2 != Length.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = QuotientUnit<Energy, EnergyUnits, UnitCubed<Length, LengthUnits>, LengthUnits>
+                .Create(from.Original.Magnitude);
+
+            return unit.SetScales(Energy.BaseScale, Length.BaseScale);
+        }
+        
+        public static NewtonSquaredMeterSquared_PerNewtonSquareMeterSquared Transpose(
+            CoulombSquaredVoltageSquared_PerNewtonSquareMeterSquared from)
+        {
+            if (from.Scales.Scale1 != ElectricCharge.BaseScale ||
+                from.Scales.Scale2 != Force.BaseScale ||
+                from.Scales.Scale3 != Length.BaseScale ||
+                from.Scales.Scale4 != ElectricPotential.BaseScale)
+                throw new InvalidOperationException(ErrorMsg.COMPOSITE_SCALES_MISMATCH);
+
+            var unit = NewtonSquaredMeterSquared_PerNewtonSquareMeterSquared.Create(from.Magnitude);
+            return unit.SetScales(Force.BaseScale, Length.BaseScale, Force.BaseScale, Length.BaseScale);
+        }
     }
 }

@@ -450,7 +450,22 @@ namespace JunX.Physics.ClassicalMechanics
             return Simplify(CompositeSimplifier.Simplify(unit).Commute()) * 0.5;
         }
 
-
+        public static EnergyDensity ElectricEnergyDensity(ElectricField E)
+        {
+            var unit = QuaternaryOperator.Multiply(Constants.FreeSpacePermittivity, E.Squared());
+            var transposed = CompositeTransposer.Transpose(unit);
+            var simplified = QuaternarySimplifier.Simplify(transposed);
+            return CompositeTransposer.Transpose(simplified);
+        }
+        public static EnergyDensity MagneticEnergyDensity(MagneticFluxDensity B, FreeSpacePermeability mu0)
+        {
+            var unit = TernaryOperator.Multiply(B.ToNewton_PerAmpereMeter().Squared(), mu0.Reciprocate());
+            return CompositeTransposer.Transpose(unit);
+        }
+        public static EnergyDensity ElectromagneticFieldEnergyDensity(EnergyDensity electricEnergyDensity, EnergyDensity magneticEnergyDensity)
+            => electricEnergyDensity + magneticEnergyDensity;
+        public static EnergyDensity ElectromagneticFieldEnergyDensity(ElectricField E, MagneticFluxDensity B, FreeSpacePermeability mu0)
+            => ElectricEnergyDensity(E) + MagneticEnergyDensity(B, mu0);
         #endregion
 
         #region SIMPLIFIERS

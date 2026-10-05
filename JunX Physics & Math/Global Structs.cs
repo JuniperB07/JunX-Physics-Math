@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Net.Quic;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
@@ -1020,6 +1021,13 @@ namespace JunX
 
         public ProductUnit<Str2, En2, Str1, En1> Commute()
             => ProductUnit<Str2, En2, Str1, En1>.Create(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+
+        public ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> Squared()
+            => new ProductUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2>(Math.Pow(Original.Magnitude, 2))
+            .SetScales(Original.Scale1, Original.Scale2);
+        public ProductUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2> Cubed()
+            => new ProductUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2>(Math.Pow(Original.Magnitude, 3))
+            .SetScales(Original.Scale1, Original.Scale2);
         
         public bool IsEqualTypeParams<Str3, En3, Str4, En4>(ProductUnit<Str3, En3, Str4, En4> other)
             where Str3 : struct, IDimensionAccessible,
@@ -1497,7 +1505,14 @@ namespace JunX
         }
 
         public QuotientUnit<Str2, En2, Str1, En1> Reciprocate()
-            => QuotientUnit<Str2, En2, Str1, En1>.Create(Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+            => QuotientUnit<Str2, En2, Str1, En1>.Create(1.0 / Original.Magnitude).SetScales(Original.Scale2, Original.Scale1);
+
+        public QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2> Squared()
+            => new QuotientUnit<UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2>(Math.Pow(Original.Magnitude, 2))
+            .SetScales(Original.Scale1, Original.Scale2);
+        public QuotientUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2> Cubed()
+            => new QuotientUnit<UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2>(Math.Pow(Original.Magnitude, 3))
+            .SetScales(Original.Scale1, Original.Scale2);
 
         public bool IsEqualTypeParams<Str3, En3, Str4, En4>(QuotientUnit<Str3, En3, Str4, En4> other)
             where Str3 : struct, IDimensionAccessible,
@@ -1862,6 +1877,21 @@ namespace JunX
             HyperDimensions = (d1, d2, d3);
             return this;
         }
+
+        public TernaryProductUnit<
+            SquaredComposite<TComp>,
+            UnitSquared<Str1, En1>, En1,
+            UnitSquared<Str2, En2>, En2,
+            UnitSquared<Str3, En3>, En3> Squared()
+            => new TernaryProductUnit<SquaredComposite<TComp>, UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2, UnitSquared<Str3, En3>, En3>(Math.Pow(Magnitude, 2))
+            .SetScales(Scales.Scale1, Scales.Scale2, Scales.Scale3);
+        public TernaryProductUnit<
+            CubedComposite<TComp>,
+            UnitCubed<Str1, En1>, En1,
+            UnitCubed<Str2, En2>, En2,
+            UnitCubed<Str3, En3>, En3> Cubed()
+            => new TernaryProductUnit<CubedComposite<TComp>, UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2, UnitCubed<Str3, En3>, En3>(Math.Pow(Magnitude, 3))
+            .SetScales(Scales.Scale1, Scales.Scale2, Scales.Scale3);
         #endregion
 
         #region AB * C
@@ -1984,6 +2014,21 @@ namespace JunX
             HyperDimensions = (d1, d2, d3);
             return this;
         }
+
+        public TernaryQuotientUnit<
+            SquaredComposite<TComp>,
+            UnitSquared<Str1, En1>, En1,
+            UnitSquared<Str2, En2>, En2,
+            UnitSquared<Str3, En3>, En3> Squared()
+            => new TernaryQuotientUnit<SquaredComposite<TComp>, UnitSquared<Str1, En1>, En1, UnitSquared<Str2, En2>, En2, UnitSquared<Str3, En3>, En3>(Math.Pow(Magnitude, 2))
+            .SetScales(Scales.Scale1, Scales.Scale2, Scales.Scale3);
+        public TernaryQuotientUnit<
+            CubedComposite<TComp>,
+            UnitCubed<Str1, En1>, En1,
+            UnitCubed<Str2, En2>, En2,
+            UnitCubed<Str3, En3>, En3> Cubed()
+            => new TernaryQuotientUnit<CubedComposite<TComp>, UnitCubed<Str1, En1>, En1, UnitCubed<Str2, En2>, En2, UnitCubed<Str3, En3>, En3>(Math.Pow(Magnitude, 3))
+            .SetScales(Scales.Scale1, Scales.Scale2, Scales.Scale3);
         #endregion
 
         #region AB / C
